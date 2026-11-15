@@ -8,7 +8,7 @@ Personal tracking for work on kelp/q2-pod. This file lives on the orphan
 - [x] PEQ: Import all presets from `/EQ` in one action (`patch/peq_ui.c`)
 - [x] PEQ: headphone picker: Quick Settings' Playback hold opens Headphones,
       the saved presets (branch `headphone-picker`)
-- [ ] PEQ: OPRA search over Wi-Fi
+- [x] PEQ: OPRA search over Wi-Fi (branch `opra-search`, verified HTTPS)
   - Data: `http://opra.roonlabs.net/database_v1.jsonl` (12.6 MB, about
     12,600 EQ presets for 6,200 products). Download it to the card; it does
     not fit in RAM.
@@ -29,7 +29,7 @@ Personal tracking for work on kelp/q2-pod. This file lives on the orphan
 - [ ] Scrobbling: `SESSION_KEY=` for Last.fm, so `.scrobble.ini` does not
       need the password. Session keys do not expire. Add a small script that
       gets the key on a computer.
-- [ ] Eject Card on the device: stop playback and the card's background
+- [x] Eject Card on the device (branch `eject-card`): stop playback and the card's background
       jobs, then unmount (the USB mode path already does the stops)
 - [ ] Roon, started and controlled from the Q2 (user's requirement, as the
       FiiO M21 does): Roon Extension API for browse/transport plus a local
@@ -69,6 +69,19 @@ Line numbers are from commit facf5b0b; check them again on current main.
 - [ ] Unverified: `navigation.c` `bt_volume_poll` rewrites config.ini
       several times a second while the headset volume changes. A risk only
       if stock `toolsWriteConfig` writes in place.
+
+## Cleanups (follow-ups from feature branches)
+
+- [ ] One CA bundle define in a header. `scrobble.c` (CA_FILE),
+      `netupdate.c` (NU_CA), `radio.c` (RADIO_CA), `onlinematch.c` (OM_CA)
+      and `opra.c` (OPRA_CA) each define the path to
+      `/etc/scrobble-ca.pem`. NU_CA, RADIO_CA and OM_CA leave out
+      `PEQ_ROOT`, so host tests see a different path. Do it after
+      `opra-search` merges.
+- [ ] guide.html install note: "insert or remove the card only while the
+      Q2 is off" is partly out of date with Eject Card.
+- [ ] Eject Card: a "Mount Card" row, if an ejected card that was not
+      pulled should come back without a pull, standby or restart.
 
 ## Test failures on sound (Debian 13), all also on upstream/main
 
