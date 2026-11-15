@@ -10,8 +10,14 @@ Personal tracking for work on kelp/q2-pod. This file lives on the orphan
       between presets for different headphones
 - [ ] PEQ: OPRA search over Wi-Fi
   - Data: `http://opra.roonlabs.net/database_v1.jsonl` (12.6 MB, about
-    12,600 EQ presets for 6,200 products). Download it to the card and scan
-    it line by line; it does not fit in RAM.
+    12,600 EQ presets for 6,200 products). Download it to the card; it does
+    not fit in RAM.
+  - Index: after each download, one pass writes a compact index (vendor,
+    model, byte offsets of its EQ lines; about 250 KB). Search the index in
+    memory as the user types; on pick, read only those EQ lines at their
+    offsets and convert to APO text for the existing importer.
+  - Estimates (not measured): full-file scan about 1 s per search (SD High
+    Speed, about 15-20 MB/s); index build 1-2 s once; index search < 10 ms.
   - Supported now: `peak_dip`, `low_shelf`, `high_shelf`. Skip presets with
     `low_pass`, `high_pass`, `band_pass` or `band_stop` (5 presets).
   - Largest preset has 20 bands, within `PEQ_BANDS` (30).
