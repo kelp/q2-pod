@@ -9370,6 +9370,8 @@ int ringnav(void *ctx, void *event) {
         media_key(key);
         return STOP;
     }
+    /* AirPlay's, which stock drops (on_wm_keyup_fun): a card app's that asks (addon_remote.c) */
+    if (!result && addon_remote_key(key)) return STOP;
     if (result) {
         cancel_center();
         if (key == KEY_PREV || key == KEY_NEXT) drop_wheel();
