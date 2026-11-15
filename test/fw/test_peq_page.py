@@ -1154,6 +1154,14 @@ def test_eq_off_that_cant_be_saved_says_so_and_stays(fw):
     assert p.card.state().mode == EQ_PEQ and not fw.calls('navigator_back')
 
 
+def test_eq_off_that_cant_be_saved_says_so_with_no_presets_folder(fw):
+    p = headphones(fw, state(fw, EQ_PEQ, peq=hd600(fw)))
+    assert p.title() == 'Folder missing or unavailable'
+    p.card.fail_writes = True
+    p.click('EQ Off')
+    assert p.title() == 'Switch failed; EQ unchanged' and p.card.state().mode == EQ_PEQ
+
+
 def test_headphones_pages_back(fw):
     p = headphones(fw, files={f'{SAVED}/{k:03}.peq': b'x' for k in range(130)})
     assert p.captions()[2:4] == ['Next page', '000']
