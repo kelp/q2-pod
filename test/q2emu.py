@@ -138,6 +138,8 @@ class Handlers(dict):
 class Machine:
     def __init__(self, patched=True):
         self.u=Uc(UC_ARCH_MIPS, UC_MODE_MIPS32|UC_MODE_LITTLE_ENDIAN)
+        # The payload is built -mfp64: CU1 and FR make odd double registers legal (clang 19 uses them).
+        self.u.reg_write(UC_MIPS_REG_CP0_STATUS, self.u.reg_read(UC_MIPS_REG_CP0_STATUS) | 1<<29 | 1<<26)
         data=(B/('demo' if patched else 'stock-demo')).read_bytes()
         load_elf(self.u,data)
         # Payload text is execute-only; its top page holds the scratch cell.
