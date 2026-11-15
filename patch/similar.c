@@ -45,6 +45,7 @@ static int sim_url(char *out, unsigned n, const char *artist, const char *key) {
     static const char hex[] = "0123456789ABCDEF";
     const char *part[] = { "https://ws.audioscrobbler.com/2.0/?method=artist.getsimilar&artist=",
                            artist, "&api_key=", key,
+                           /* NOLINTNEXTLINE(bugprone-suspicious-missing-comma): one part, joined */
                            "&limit=" SIM_LIMIT(SIM_ASK) "&autocorrect=1&format=json" };
     unsigned at = 0;
     for (int i = 0; i < 5; ++i)
