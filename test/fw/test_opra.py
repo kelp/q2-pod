@@ -10,7 +10,7 @@ from test_peq_page import ACTIVE, EVT_DESTROY, EVT_IM_ACTION, EVT_VALUE_CHANGED,
 from test_radio import Curl
 
 DB, INDEX = '/mnt/mmc/.q2/opra.jsonl', '/mnt/mmc/.q2/opra.idx'
-URL = 'http://opra.roonlabs.net/database_v1.jsonl'
+URL = 'https://opra.roonlabs.net/database_v1.jsonl'
 RET_REMOVE, RET_REPEAT = 7, 8
 PK, LSC, HSC = range(3)
 r = C.byref
@@ -279,6 +279,12 @@ def test_the_download_goes_to_the_card_and_is_indexed_there(fw):
     net.work()
     assert net.curl.opts[10002] == URL and net.curl.opts[10018] == 'Q2Pod' and net.curl.opts[52] == 1
     assert (net.curl.opts[19], net.curl.opts[20]) == (1024, 30)  # a stalled transfer ends
+    assert (net.curl.opts[10065], net.curl.opts[64], net.curl.opts[81]) == ('/etc/scrobble-ca.pem', 1, 2)  # verified TLS
+    flags = (C.c_uint * 4)()
+    ctx = (C.c_void_p * 33)()
+    ctx[0x100 // 8] = C.addressof(flags)
+    assert C.CFUNCTYPE(C.c_int, C.c_void_p, C.c_void_p, C.c_void_p)(net.curl.opts[20108])(0, C.addressof(ctx), None) == 0
+    assert flags[3] == 0x200000  # tls_untimed: X509_V_FLAG_NO_CHECK_TIME
     assert c.files[DB] == jsonl(RECORDS) and c.files[INDEX] == index_of(RECORDS)
     assert set(c.files) == {DB, INDEX}  # the parts renamed into place
     assert net.tick() == RET_REMOVE and net.told[-1] == 'OPRA ready: 3 presets'
