@@ -966,7 +966,10 @@ static int render(const void *unused) {
         int off = !eq_load(&s) || !g_equalizer_flag || s.mode != EQ_PEQ;
         row_dim(view, n++, "EQ settings", 0, EQ_SETTINGS, INTO);
         row_dim(view, n++, "EQ Off", off ? "Playing" : 0, EQ_NONE, 0);
+        char said[sizeof ui.status]; /* a pick's or EQ Off's failure keeps the title */
+        memcpy(said, ui.status, sizeof said);
         list_files(PEQ_SAVED, ".peq");
+        if (said[0]) memcpy(ui.status, said, sizeof said);
         int last = ui.count ? (ui.count - 1) / FILE_PAGE : 0;
         if (ui.file_page > last) { /* the card lost the page's files: its last page, from the top */
             ui.file_page = last, offset = 0;
