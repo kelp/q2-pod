@@ -2,3 +2,6 @@
 # Each branch starts from upstream/main and becomes one upstream PR.
 peq-import-all
 headphone-picker
+eq-import-skip-appledouble
+test-patch-fpu-fr
+test-seam-timescale
