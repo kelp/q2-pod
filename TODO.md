@@ -33,7 +33,10 @@ Personal tracking for work on kelp/q2-pod. This file lives on the orphan
       jobs, then unmount (the USB mode path already does the stops)
 - [ ] Roon, started and controlled from the Q2 (user's requirement, as the
       FiiO M21 does): Roon Extension API for browse/transport plus a local
-      zone (squeezelite or AirPlay), in one app. Design research running.
+      zone (squeezelite or AirPlay), in one app. Design: phase 1 remote + stock AirPlay zone (no
+      firmware change), phase 2 squeezelite + general `sound=1` card-app hook
+      (patch/addon_sound.c), phase 3 BT/USB. Volume on the wheel (Roon zone
+      Fixed); app controls other zones too. App repo: ~/code/q2-roon (local).
       Earlier note: Roon zone through squeezelite (enable Squeezebox Support in Roon).
       RAAT and Roon Bridge are not possible: closed protocol, no MIPS build.
       First test the existing AirPlay receiver as a Roon AirPlay zone.
