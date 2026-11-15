@@ -108,8 +108,8 @@ static int smart_needed(void) {
     return g_usbdet_value || g_airplayflag || g_dlnaflag || g_synclinkflag == 2 ||
            g_syncLink_status || g_wifitransport_flag || airplayGetFlag() == 2 || type - 2 < 2 ||
            type - 0xf1 < 2 || spot_running() || radio_status() == 2 || addon_running() ||
-           netupdate_busy() || album_lyrics_busy() || tidal_busy() || sw.hold_timer ||
-           net_page_open();
+           netupdate_busy() || album_lyrics_busy() || similar_busy() || tidal_busy() ||
+           sw.hold_timer || net_page_open();
 }
 
 /* power_poll, every SMART_POLL_MS. The row off, or the user's Wi-Fi off: stock's, and a radio Smart

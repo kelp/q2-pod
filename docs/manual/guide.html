@@ -670,6 +670,7 @@ p:has(+ ul), p:has(+ ol), p:has(+ table), p:has(+ pre), .task, h2, h3, .lead { b
   <div class="sec">
   <h2 id="queue">The queue, shuffle and repeat</h2>
   <p>On Now Playing, hold Play/Pause and select <b>View Queue</b> to see the next songs: a maximum of 500 with shuffle. To play a song there next, hold Play/Pause on it. The same menu sets <b>Shuffle</b>, <b>Repeat</b> and <b>Group by: Album / Folder</b>. Changes do not move the current song.</p>
+  <p><b>More like this</b>, in the same menu, gets from Last.fm the artists that are similar to the artist of the current song. It then plays a maximum of 50 of your songs by those artists, with some songs by the artist of the current song, in shuffle order. It needs Wi-Fi and an <code>API_KEY</code> line in the <code>[LASTFM]</code> section of <code>.scrobble.ini</code> (<a href="#scrobble">Scrobbling</a>). The key is sufficient. An artist name matches when its capital letters or a leading “The” are different.</p>
   <table>
     <thead><tr><th>Shuffle</th><th>How the queue plays</th></tr></thead>
     <tbody>
@@ -894,7 +895,7 @@ USER=q2listener
 PASSWORD=ExamplePassword123
 API_KEY=0123456789abcdef0123456789abcdef
 API_SECRET=fedcba9876543210fedcba9876543210</pre>
-  <p>Your Last.fm username and password, and your own API key and secret from last.fm/api/account/create (with an application name of your selection).</p>
+  <p>Your Last.fm username and password, and your own API key and secret from last.fm/api/account/create (with an application name of your selection). <b>More like this</b> (<a href="#queue">The queue</a>) needs only the <code>API_KEY</code> line.</p>
   </div>
   <div class="sub">
   <h3>ListenBrainz</h3>
