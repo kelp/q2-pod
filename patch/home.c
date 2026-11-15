@@ -87,6 +87,7 @@ int ringnav_localmusic(void *win, void *ctx) {
     widget_restack(library_row(view, "local_frequentplay", most_played, 0, "Most Played", 1), n++);
     widget_set_visible(stock[L_FREQUENT], 0, 0); /* Most Played is its list, from every listen */
     widget_restack(stock[L_FREQUENT], n++);
+    widget_restack(library_row(view, "local_stats", listening_stats, 0, "Listening Stats", 1), n++);
     widget_restack(stock[L_HIRES], n++);
     widget_restack(library_row(view, "local_longsongs", long_songs, 0, "Long Songs", 1), n++);
     /* Podcasts, Audiobooks, Photos, Books and Videos, each only with its folder; then iPod's Games.

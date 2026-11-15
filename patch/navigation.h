@@ -587,6 +587,9 @@ int shuffle_menu(void *ctx, void *event);
 int shuffle_play(void *all);
 int tidal_downloads(void *ctx, void *event);
 
+/* listening_stats.c */
+int listening_stats(void *ctx, void *event);
+
 /* tags.c */
 int scan_quote(char *sql, unsigned cap, unsigned *n, const char *s);
 
