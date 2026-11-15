@@ -61,7 +61,8 @@ enum {
 /* clang-format off */
 enum { BACK = 1000, APPLY, RESET, BYPASS, PER_OUTPUT, MENU, IMPORT, SAVE, ENABLE, TYPE, RAISE, LOWER, TYPED, CHANNEL, STEP,
        YES, CANCEL, DELETE, BALANCE, PREAMP, GAIN, /* these three open the picker, in picks[] order */
-       FREQUENCY, QUALITY, /* and these two the value menu */ KEYBOARD, STOCK, FILE_PREV, FILE_NEXT, RENAME, NAMED };
+       FREQUENCY, QUALITY, /* and these two the value menu */ KEYBOARD, STOCK, FILE_PREV, FILE_NEXT, RENAME, NAMED,
+       IMPORT_ALL };
 /* clang-format on */
 #define FILE_PAGE 128
 #define GRAPH_W (375 - 2 * PEQ_GRAPH_X)
@@ -544,6 +545,31 @@ void *edit_create(void *item, const char *input_type, int y, int h) {
     return edit;
 }
 
+/* Import all: each listed file saved under its name, unless a preset of that name is already
+ * saved; the title counts what was saved, kept and failed. */
+static void import_all(void) {
+    int saved = 0, kept = 0, failed = 0;
+    mkdir(PEQ_SAVED, 0700);
+    for (int i = 0; i < ui.count; ++i) {
+        char path[600], destination[600];
+        peq_preset p;
+        peq_error error;
+        snprintf(path, sizeof(path), PEQ_IMPORT "/%s", ui.names[i]);
+        snprintf(destination, sizeof(destination), PEQ_SAVED "/%.*s.peq",
+                 (int)strlen(ui.names[i]) - 4, ui.names[i]);
+        int result = peq_import_file(path, &p, &error) ? peq_save(destination, &p, 0) : 0;
+        if (result == 1)
+            ++saved;
+        else if (result == 2)
+            ++kept;
+        else
+            ++failed;
+    }
+    int k = snprintf(ui.status, sizeof(ui.status), "Imported %d", saved);
+    if (kept) k += snprintf(ui.status + k, sizeof(ui.status) - k, "; %d already saved", kept);
+    if (failed) snprintf(ui.status + k, sizeof(ui.status) - k, "; %d failed", failed);
+}
+
 static void save_candidate(int replace) {
     mkdir(PEQ_SAVED, 0700);
     int result = peq_save(ui.destination, &ui.candidate, replace);
@@ -613,6 +639,8 @@ static int action(void *ctx, void *event) {
         ui.screen = PRESETS;
     else if (id == IMPORT)
         ui.screen = IMPORTS;
+    else if (id == IMPORT_ALL)
+        import_all();
     else if (id == FILE_PREV || id == FILE_NEXT) {
         ui.file_page += id == FILE_NEXT ? 1 : -1;
         ui.rendered = -1;
@@ -933,6 +961,7 @@ static int render(const void *unused) {
             ui.file_page = last, offset = 0;
             widget_set_prop_int(view, "_ringnav_index", 0); /* set above, from the page that went */
         }
+        if (ui.screen == IMPORTS && ui.count) row(view, n++, "Import all", IMPORT_ALL);
         if (ui.file_page) row(view, n++, "Previous page", FILE_PREV);
         if (ui.file_page < last) row(view, n++, "Next page", FILE_NEXT);
         for (int i = 0, start = ui.file_page * FILE_PAGE; i < FILE_PAGE && start + i < ui.count;
