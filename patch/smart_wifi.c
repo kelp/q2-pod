@@ -100,16 +100,16 @@ static int net_page_open(void) {
  * on_wm_timer_networkstatus stops once offline, whatever it is doing, as Play must fetch its URL at
  * once), Spotify's librespot running or waiting to start (it never retries a Connect login or mDNS
  * that failed), a station playing, a card app running, Network Update's download or an Apps job,
- * Download Album Lyrics, a Tidal download or an action held for the link (smart_hold); or a page
- * above. A scrobble upload and a time sync pending on a link need it too (smart_poll), and are an
- * automatic upload's own. */
+ * Download Album Lyrics, a Tidal download, an OPRA download or an action held for the link
+ * (smart_hold); or a page above. A scrobble upload and a time sync pending on a link need it too
+ * (smart_poll), and are an automatic upload's own. */
 static int smart_needed(void) {
     unsigned type = (unsigned)mclGetPlayType();
     return g_usbdet_value || g_airplayflag || g_dlnaflag || g_synclinkflag == 2 ||
            g_syncLink_status || g_wifitransport_flag || airplayGetFlag() == 2 || type - 2 < 2 ||
            type - 0xf1 < 2 || spot_running() || radio_status() == 2 || addon_running() ||
-           netupdate_busy() || album_lyrics_busy() || tidal_busy() || sw.hold_timer ||
-           net_page_open();
+           netupdate_busy() || album_lyrics_busy() || tidal_busy() || opra_busy() ||
+           sw.hold_timer || net_page_open();
 }
 
 /* power_poll, every SMART_POLL_MS. The row off, or the user's Wi-Fi off: stock's, and a radio Smart
