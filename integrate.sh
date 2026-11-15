@@ -16,4 +16,7 @@ grep -v '^\s*\(#\|$\)' notes/branches.txt | while read -r b; do
         git commit -q --no-edit
     }
 done
+# Fixes for interactions between branches (not conflicts, so rerere has
+# none): one patch each, applied in name order.
+for f in notes/fixups/*.patch; do [ -e "$f" ] && git am -q "$f"; done
 git log --oneline upstream/main..integration

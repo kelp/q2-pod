@@ -1,0 +1,37 @@
+From 0470c693f7379d0ec629fdac5a12a4add33d3a63 Mon Sep 17 00:00:00 2001
+From: Travis Cole <11240+kelp@users.noreply.github.com>
+Date: Sat, 14 Nov 2026 22:58:13 -0800
+Subject: [PATCH] eject: card_away stops More like this's request
+
+ringnav_usbmode called similar_stop (more-like-this); eject-card moved
+its stops into card_away, so the call moves there.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01DaXZzN3FY6RrXiA6e34J2b
+---
+ patch/eject.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/patch/eject.c b/patch/eject.c
+index 0231bb27..b6663f07 100644
+--- a/patch/eject.c
++++ b/patch/eject.c
+@@ -17,12 +17,14 @@ extern void eject_sync(void);
+ 
+ /* The jobs that write to the card or keep its files open, each stopped: the card apps (they run
+  * from /tmp: addon.c), Tidal's downloads (tidal.c), Download Album Lyrics' job, playlist art's
+- * worker and the song durations' (durations.c). USB Storage (navigation.c ringnav_usbmode) and
++ * worker and the song durations' (durations.c); More like this's request stops, so no mix of the
++ * card's songs plays (similar.c). USB Storage (navigation.c ringnav_usbmode) and
+  * Eject Card. */
+ void card_away(void) {
+     tidal_card_away();
+     addon_card_away();
+     album_lyrics_stop();
++    similar_stop();
+     playlist_art_stop();
+     durations_shutdown(0);
+ }
+-- 
+2.56.1
+
