@@ -6,8 +6,8 @@ import ctypes as C
 import pytest
 
 from conftest import O
-from test_addon import card
-from test_headset import NEXT, PAUSE, PAUSECD, PLAYCD, PLAYING, PLAYKEY, PLAYPAUSE, PREV, STOP, Player, hs
+from test_addon import Sleep, card, sl
+from test_headset import NEXT, PAUSE, PAUSECD, PLAYCD, PLAYING, PLAYKEY, PLAYPAUSE, PREV, STOP, STOPPED, Player, hs, link
 from test_nav_loop import STOP as RET_STOP, Keys, Ui, list_page, stock_bytes  # noqa: F401 (a fixture)
 from test_radio import Rd
 
@@ -169,11 +169,12 @@ def command(fw, player, code, step=200):
 
 
 @pytest.mark.parametrize('code,word', [(PLAYPAUSE, b'playpause'), (NEXT, b'next'), (PREV, b'previous'),
-                                       (PLAYCD, b'playpause'), (PLAYKEY, b'playpause'), (PAUSECD, b'playpause'),
-                                       (PAUSE, b'playpause'), (STOP, b'playpause')])
-def test_headset_keys_reach_the_app_and_never_stop_airplay(fw, code, word):
-    player = Player(fw)
+                                       (PLAYCD, b'play'), (PLAYKEY, b'play'), (PAUSECD, b'pause'), (PAUSE, b'pause'),
+                                       (STOP, b'pause')])
+@pytest.mark.parametrize('status', [PLAYING, STOPPED])  # the local player's, which means nothing under AirPlay
+def test_headset_keys_reach_the_app_and_never_stop_airplay(fw, code, word, status):
     r = Remote(fw)
+    player = Player(fw, status=status)
     command(fw, player, code)
     assert r.run()[0] == [b'Q2SPOT/1\n1\tctl\t' + word + b'\n']
     assert player.toggles() == 0 and not fw.calls('player_next_music') and not fw.calls('player_prev_music')
@@ -181,23 +182,86 @@ def test_headset_keys_reach_the_app_and_never_stop_airplay(fw, code, word):
 
 @pytest.mark.parametrize('code', [PLAYPAUSE, PAUSE])
 def test_headset_keys_without_the_app_are_as_before(fw, code):
-    player = Player(fw, status=PLAYING)
     r = Remote(fw, running=False)
+    player = Player(fw, status=PLAYING)
     command(fw, player, code)
     assert not r.jobs and player.toggles() == 1
 
 
-def test_a_bud_out_under_airplay_with_the_app_stops_nothing(fw):
-    player = Player(fw, status=PLAYING)
+# The firmware's own pauses and plays (media_set_playing): the ears, the link, the sleep timer.
+
+def sent(r):
+    return [req.split(b'\t')[-1].rstrip(b'\n') for req in r.run()[0]]
+
+
+@pytest.mark.parametrize('playing,word', [(0, b'pause'), (1, b'play')])
+def test_a_pause_or_play_of_the_firmware_s_own_is_the_app_s(fw, playing, word):
     r = Remote(fw)
+    player = Player(fw, status=STOPPED)
+    fw.fn('media_set_playing', None, C.c_int)(playing)
+    assert sent(r) == [word] and player.toggles() == 0 and hs(fw).automatic == 0
+
+
+def test_without_the_app_it_is_the_local_player_s_as_before(fw):
+    r = Remote(fw, running=False)
+    player = Player(fw, status=PLAYING)
+    fw.fn('media_set_playing', None, C.c_int)(0)
+    assert not r.jobs and player.toggles() == 1
+
+
+def test_a_bud_out_pauses_the_app_and_back_in_plays_it(fw):
+    r = Remote(fw)
+    player = Player(fw, status=STOPPED)
     for report in (3, 1):
         player.now += 200
         fw.fn('headset_ears', None, C.c_uint)(4 | report)
-    assert player.toggles() == 0 and not r.jobs
+    assert sent(r) == [b'pause']
+    player.now += 200
+    fw.fn('headset_ears', None, C.c_uint)(4 | 3)
+    assert sent(r) == [b'play'] and player.toggles() == 0
 
 
-def test_the_headset_s_link_dropping_under_airplay_with_the_app_stops_nothing(fw):
-    player = Player(fw, status=PLAYING)
-    Remote(fw)
+def test_both_buds_out_pause_the_app_without_asking_again_each_poll(fw):
+    r = Remote(fw)
+    player = Player(fw, status=STOPPED)
+    for report in (3, 0, 0, 0):
+        player.now += 100
+        fw.fn('headset_ears', None, C.c_uint)(4 | report)
+    assert sent(r) == [b'pause'] and player.toggles() == 0
+
+
+def test_the_link_dropping_pauses_the_app(fw):
+    r = Remote(fw)
+    player = Player(fw, status=STOPPED)  # after the card: its clock
+    link(fw, player)
+    fw.mock('fw_pthread_create', lambda thread, attr, fn, arg, *_: r.jobs.append(arg) or 0)  # link() took it over
+    fw.var('bt_linkstatus', C.c_ubyte).value = 0
+    player.now += 200
+    fw.fn('headset_poll', None)()
+    assert sent(r) == [b'pause'] and player.toggles() == 0
+
+
+def test_a_sleep_timer_under_airplay_pauses_the_app(fw):
+    s = Sleep(fw)
+    s.read(b'until %d' % (s.world.now + 600))
+    r = Remote(fw)
+
+    def clock(which, ts, *_):
+        t = C.cast(ts, C.POINTER(C.c_long))
+        t[0], t[1] = s.boot + 600, 0
+    fw.mock('fw_clock_gettime', clock)
+    fw.fn('addon__sleep_check', None)()
+    assert sent(r) == [b'pause'] and s.paused() == 0 and sl(fw).at == 0
+
+
+def test_an_app_that_starts_is_seen_within_a_second(fw):
+    r = Remote(fw, running=False)
+    player = Player(fw, status=STOPPED)
     fw.fn('media_set_playing', None, C.c_int)(0)
-    assert player.toggles() == 0 and hs(fw).automatic == 0
+    r.world.files[b'/tmp/q2-roon'] = b'4242\n'
+    player.now += 999
+    fw.fn('media_set_playing', None, C.c_int)(0)
+    assert not r.jobs
+    player.now += 1
+    fw.fn('media_set_playing', None, C.c_int)(0)
+    assert sent(r) == [b'pause']
