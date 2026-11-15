@@ -267,6 +267,9 @@ static widget_t *row_dim(widget_t *view, int index, const char *text, const char
              *label = 0;
     widget_use_style(item, "s_listitem_black");
     int x = flags & WIDE ? 166 : 130; /* a LONG value's */
+    /* Before the caption: the selected row's marquee (navigation.c's row_scroller) scrolls only
+     * a row's first hscroll_label, so a WIDE row's long caption keeps its ellipsis, still. */
+    widget_t *wide = value && flags & WIDE ? long_value(item, value, rh, x) : 0;
     for (int i = 0; i < 1 + (value && !(flags & LONG)); ++i) {
         if (flags & WIDE) {
             label = hscroll_label_create(item, ROW_X, 0, x - 4 - ROW_X, rh);
@@ -291,7 +294,7 @@ static widget_t *row_dim(widget_t *view, int index, const char *text, const char
         theme_font(label, ROLE_TITLE, FONT_ROW); /* by its text */
         if (!i && flags & SMALL) widget_set_prop_int(label, "style:normal:font_size", 16);
     }
-    if (value && flags & LONG) label = long_value(item, value, rh, x);
+    if (value && flags & LONG) label = wide ? wide : long_value(item, value, rh, x);
     if (flags & INTO) row_into(item, rh);
     widget_on(item, EVT_CLICK, action, (void *)(long)id);
     return label;
