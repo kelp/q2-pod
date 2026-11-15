@@ -555,6 +555,16 @@ def test_a_card_that_fails_any_step_keeps_the_database_there_was(fw, call, path)
     assert net.tick() == RET_REMOVE and net.told[-1] == 'Cannot write to the card' and c.files == before
 
 
+def test_an_index_that_cannot_be_renamed_leaves_no_index_of_the_database_there_was(fw):
+    c = card(fw)
+    net = Net(fw, Curl(fw, jsonl(NEWER)))
+    failing(fw, c, 'rename', NEW)
+    net.start()
+    net.work()
+    assert net.tick() == RET_REMOVE and net.told[-1] == 'Cannot write to the card'
+    assert c.files == {DB: jsonl(NEWER)} and not fw.fn('opra_ready', C.c_int)()  # the old spans would misread it
+
+
 def test_a_download_cancelled_while_indexing_leaves_no_part(fw):
     c = Card(fw, {})
     net = Net(fw, Curl(fw, jsonl(RECORDS)))
