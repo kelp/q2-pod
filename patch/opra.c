@@ -89,9 +89,10 @@ static int string(const char *p, char *out, unsigned n) {
                     c = c * 16 + hex(p[1]);
             if (c >= 0xd800 && c < 0xe000) c = '?'; /* half a pair: none in the database */
             if (c >= 0x800)
-                u[0] = 0xe0 | c >> 12, u[1] = 0x80 | (c >> 6 & 63), u[2] = 0x80 | (c & 63), len = 3;
+                u[0] = (char)(0xe0 | c >> 12), u[1] = (char)(0x80 | (c >> 6 & 63)),
+                u[2] = (char)(0x80 | (c & 63)), len = 3;
             else if (c >= 0x80)
-                u[0] = 0xc0 | c >> 6, u[1] = 0x80 | (c & 63), len = 2;
+                u[0] = (char)(0xc0 | c >> 6), u[1] = (char)(0x80 | (c & 63)), len = 2;
         } else if (c == '\\') {
             c = (unsigned char)*p;
             if (c == 'b' || c == 'f' || c == 'n' || c == 'r' || c == 't')
@@ -99,7 +100,7 @@ static int string(const char *p, char *out, unsigned n) {
             else if (c != '"' && c != '\\' && c != '/')
                 return 0;
         }
-        if (len == 1) u[0] = c < 32 ? ' ' : c; /* a byte of raw UTF-8 as it is */
+        if (len == 1) u[0] = c < 32 ? ' ' : (char)c; /* a byte of raw UTF-8 as it is */
         for (unsigned i = 0; i < len && k + 1 < n; ++i) out[k++] = u[i];
     }
     out[k] = 0;
