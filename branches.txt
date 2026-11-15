@@ -9,3 +9,4 @@ more-like-this
 listening-stats
 opra-search
 eject-card
+airplay-remote
