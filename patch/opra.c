@@ -6,7 +6,8 @@
  * index, and a product's presets are read from their spans. */
 #include "peq.h"
 
-#define OPRA_URL "http://opra.roonlabs.net/database_v1.jsonl"
+#define OPRA_URL "https://opra.roonlabs.net/database_v1.jsonl"
+#define OPRA_CA PEQ_ROOT "/etc/scrobble-ca.pem" /* scrobble.c's; GTS Root R4 signs the host */
 #define OPRA_DIR PEQ_ROOT "/mnt/mmc/.q2"
 #define OPRA_DB OPRA_DIR "/opra.jsonl"
 #define OPRA_INDEX OPRA_DIR "/opra.idx"
@@ -426,16 +427,20 @@ static void *worker(void *unused) {
     }
     void *c = curl_easy_init();
     if (c) {
-        curl_easy_setopt(c, 10002, OPRA_URL); /* CURLOPT_URL */
-        curl_easy_setopt(c, 20011, got);      /* WRITEFUNCTION */
-        curl_easy_setopt(c, 20219, stopped);  /* XFERINFOFUNCTION */
-        curl_easy_setopt(c, 43, 0L);          /* NOPROGRESS off, for it */
-        curl_easy_setopt(c, 99, 1L);          /* NOSIGNAL: off the UI thread */
-        curl_easy_setopt(c, 52, 1L);          /* FOLLOWLOCATION */
-        curl_easy_setopt(c, 78, 15L);         /* CONNECTTIMEOUT */
-        curl_easy_setopt(c, 19, 1024L);       /* LOW_SPEED_LIMIT: a stalled transfer ends */
-        curl_easy_setopt(c, 20, 30L);         /* LOW_SPEED_TIME */
-        curl_easy_setopt(c, 10018, "Q2Pod");  /* USERAGENT */
+        curl_easy_setopt(c, 10002, OPRA_URL);    /* CURLOPT_URL */
+        curl_easy_setopt(c, 20011, got);         /* WRITEFUNCTION */
+        curl_easy_setopt(c, 20219, stopped);     /* XFERINFOFUNCTION */
+        curl_easy_setopt(c, 43, 0L);             /* NOPROGRESS off, for it */
+        curl_easy_setopt(c, 99, 1L);             /* NOSIGNAL: off the UI thread */
+        curl_easy_setopt(c, 52, 1L);             /* FOLLOWLOCATION */
+        curl_easy_setopt(c, 78, 15L);            /* CONNECTTIMEOUT */
+        curl_easy_setopt(c, 19, 1024L);          /* LOW_SPEED_LIMIT: a stalled transfer ends */
+        curl_easy_setopt(c, 20, 30L);            /* LOW_SPEED_TIME */
+        curl_easy_setopt(c, 10018, "Q2Pod");     /* USERAGENT */
+        curl_easy_setopt(c, 10065, OPRA_CA);     /* CAINFO */
+        curl_easy_setopt(c, 64, 1L);             /* SSL_VERIFYPEER */
+        curl_easy_setopt(c, 81, 2L);             /* SSL_VERIFYHOST */
+        curl_easy_setopt(c, 20108, tls_untimed); /* SSL_CTX_FUNCTION: no date checks */
         err = curl_easy_perform(c);
         if (!err) curl_easy_getinfo(c, 0x200002, &code); /* RESPONSE_CODE */
         curl_easy_cleanup(c);
