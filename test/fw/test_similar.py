@@ -281,6 +281,54 @@ def test_more_like_this_plays_the_librarys_songs_by_similar_artists(fw, mcl):
     assert not q.sim.thread and not q.sim.names and not q.sim.running
 
 
+class Pages:
+    """The window stack: playing_page opens a page of that name over the top one; a forced close takes it out."""
+    def __init__(self, fw, ui, *names):
+        self.ui, self.closed = ui, []
+        self.pages = [self.open(name) for name in names]
+        fw.mock('navigator_to_with_context', self.navigate)
+        fw.mock('window_manager_close_window_force', lambda wm, w, *_: self.close(w))
+
+    def open(self, name):
+        w = self.ui.new('window_create', 0, 0, 0, 0, 0)
+        self.ui.name[w] = name
+        return w
+
+    def navigate(self, name, info, *_):
+        if C.string_at(name) == b'playing_page':
+            self.open('playing_page')
+        self.ui.navigate(name, info)
+
+    def close(self, w):
+        self.ui.windows.remove(w)
+        self.closed.append(w)
+        return 0
+
+    def names(self):
+        return [self.ui.name.get(w) for w in self.ui.windows]
+
+
+def test_the_mix_takes_the_place_of_the_now_playing_it_was_asked_from(fw, mcl):
+    """Return from the mix's Now Playing goes back where Now Playing came from: Home, not the last queue's page."""
+    q = Q2(fw, mcl)
+    p = Pages(fw, q.ui, 'home_page', 'playing_page')
+    home, np = p.pages
+    q.press()
+    q.answer()
+    assert len(q.ui.played) == 1 and p.closed == [np]
+    assert p.names() == ['home_page', 'playing_page'] and q.ui.windows[0] == home
+
+
+def test_the_mix_leaves_another_page_on_top_where_it_is(fw, mcl):
+    """Asked from Now Playing, then left for a list: the mix opens over the list, which stays."""
+    q = Q2(fw, mcl)
+    p = Pages(fw, q.ui, 'home_page', 'playing_page')
+    q.press()
+    p.open('songs_page')
+    q.answer()
+    assert not p.closed and p.names() == ['home_page', 'playing_page', 'songs_page', 'playing_page']
+
+
 def test_a_reply_is_waited_for(fw, mcl):
     q = Q2(fw, mcl)
     q.press()
