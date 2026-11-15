@@ -131,6 +131,73 @@ def test_anything_but_a_whole_eq_record_is_refused(fw, line):
     assert record(fw, line)[0] == 0
 
 
+# One band's record, compact; each case below changes one thing in it.
+VALID = jsonl([eq('a::b', 'A', 'D', [band('peak_dip', 100, 1, 1)])]).rstrip(b'\n')
+
+
+def test_whitespace_between_tokens_and_skipped_values_of_each_kind_are_read(fw):
+    x = eq('a::b', 'A', 'D', [band('peak_dip', 100, 1, 1)])
+    x = {'skip': 'SKIP', **x}
+    spaced = json.dumps(x, indent='\t').replace('\n', '\r\n ').encode()  # tabs, CR LF and spaces
+    spaced = spaced.replace(b'"SKIP"', b'[ [ ], { }, true, null, -1.5e+3, [[[[1]]]] ]')
+    ok, p, *names = record(fw, spaced)
+    assert ok == 1 and names == ['A', 'D', 'a::b'] and bytes(p) == bytes(record(fw, VALID)[1])
+
+
+def test_escapes_are_utf_8_and_control_characters_spaces(fw):
+    line = VALID.replace(b'"details":"D"', b'"details":"\\b\\f\\n\\r\\u0041\\u00e9\\u20ac\\ud83d\\u0001\x01!"')
+    assert record(fw, line)[3] == '    Aé€?  !'  # \ud83d: half a pair
+
+
+def test_a_long_text_is_cut_to_fit(fw):
+    assert record(fw, VALID.replace(b'"author":"A"', b'"author":"' + b'x' * 100 + b'"'))[2] == 'x' * 63
+
+
+def test_numbers_take_exponents_and_a_long_one_is_read_to_its_limit(fw):
+    line = VALID.replace(b'"frequency":100,"gain_db":1,"q":1', b'"frequency":1e3,"gain_db":2.5E-1,"q":0.' + b'7' * 40)
+    ok, p, *_ = record(fw, line)
+    assert ok == 1 and (p.bands[0].frequency, p.bands[0].gain) == (1000, 0.25) and p.bands[0].q == pytest.approx(0.7 + 7 / 90)
+
+
+def test_a_band_over_20_khz_or_under_q_0_1_is_kept_at_peq_s_limit(fw):
+    ok, p, *_ = record(fw, eq('a::b', 'A', '', [band('high_shelf', 25000, 1, 0.05)]))
+    assert ok == 1 and (p.bands[0].frequency, p.bands[0].q) == (20000, 0.1)
+
+
+def test_a_record_without_details_has_none(fw):
+    ok, p, author, details, product = record(fw, VALID.replace(b'"details":"D",', b''))
+    assert ok == 1 and (author, details, product) == ('A', '', 'a::b')
+
+
+@pytest.mark.parametrize('old, new', [
+    (b'{"type"', b'{"x":' + b'[' * 17 + b']' * 17 + b',"type"'),  # a value too deep to skip
+    (b'{"type"', b'{"x":{1:2},"type"'),  # a key that is no string
+    (b'{"type"', b'{"x":{"a" 2},"type"'),  # a member without its colon
+    (b'{"type"', b'{"x":[1 2],"type"'),  # items without their comma
+    (b'{"type"', b'{"x":,"type"'),  # no value
+    (b'{"type":"eq"', b'{"type" "eq"'),
+    (b'"data":{', b'"data":{},"x":{'),  # data without its members
+    (b'"author":"A"', b'"author":5'),
+    (b'"author":"A"', b'"author":"\\x"'),  # no such escape
+    (b'"author":"A",', b''),
+    (b',"product_id":"a::b"', b''),
+    (b'"bands":[', b'"bands":{'),
+    (b'{"type":"peak_dip",', b'{'),
+    (b'"type":"peak_dip"', b'"type":1'),
+    (b'"frequency":100,', b''),
+    (b'"gain_db":1,', b''),
+    (b',"q":1', b''),
+    (b'"q":1}]', b'"q":1} {"type":"peak_dip","frequency":200,"gain_db":1,"q":1}]')])  # bands without a comma
+def test_a_record_with_any_one_part_wrong_is_refused(fw, old, new):
+    assert record(fw, VALID)[0] == 1 and old in VALID
+    assert record(fw, VALID.replace(old, new, 1))[0] == 0
+
+
+@pytest.mark.parametrize('line', [b'{"x":"open', b'{"x":"open\\', b'{"type":"eq","data":{"author":"abc'])
+def test_a_string_cut_short_is_refused(fw, line):
+    assert record(fw, line)[0] == 0
+
+
 # The index.
 
 def build(fw, db=DB, out=INDEX):
@@ -163,6 +230,60 @@ def test_no_database_or_no_room_for_the_index_builds_nothing(fw):
     assert build(fw) == -1
     c = card(fw, index=False)
     c.fail_writes = True
+    assert build(fw) == -1 and INDEX not in c.files
+
+
+def test_records_that_name_nothing_are_passed_over(fw):
+    records = [
+        {'id': 'untyped', 'data': {}},
+        {'type': 'vendor', 'id': 'acme'},  # no name: its products are named alone
+        {'type': 'vendor', 'data': {'name': 'No id'}},
+        {'type': 'vendor', 'id': 'zed', 'data': {'name': 'Zed'}},
+        eq('gone::x', 'AutoEQ', '', ONE),  # its product never follows
+        eq('acme::a', 'AutoEQ', '', ONE),
+        {'type': 'product', 'data': {'name': 'No id'}},
+        {'type': 'product', 'id': 'acme::a'},  # no name
+        {'type': 'product', 'id': 'acme::a', 'data': {'name': 'A', 'vendor_id': 'acme'}},
+        eq('b::b', 'AutoEQ', '', ONE),
+        {'type': 'product', 'id': 'b::b', 'data': {'name': 'B', 'vendor_id': 'nobody'}},
+        eq('c::c', 'AutoEQ', '', ONE),
+        {'type': 'product', 'id': 'c::c', 'data': {'name': 'C'}},
+    ]
+    c = Card(fw, {DB: jsonl(records)})
+    s = spans(records)
+    assert build(fw) == 3
+    assert c.files[INDEX] == f'A\t{s[5][0]} {s[5][1]}\nB\t{s[9][0]} {s[9][1]}\nC\t{s[11][0]} {s[11][1]}\n'.encode()
+
+
+def test_a_product_keeps_its_first_64_presets(fw):
+    records = [*(eq('a::b', f'Author {k}', '', ONE) for k in range(70)), {'type': 'product', 'id': 'a::b', 'data': {'name': 'B'}}]
+    c = Card(fw, {DB: jsonl(records)})
+    assert build(fw) == 64
+    assert c.files[INDEX] == ('B' + ''.join(f'\t{at} {n}' for at, n in spans(records)[:64]) + '\n').encode()
+
+
+def test_any_number_of_vendors_name_their_products(fw):
+    records = [*({'type': 'vendor', 'id': f'v{k}', 'data': {'name': f'V{k}'}} for k in range(600)),
+               eq('v599::p', 'AutoEQ', '', ONE), {'type': 'product', 'id': 'v599::p', 'data': {'name': 'P', 'vendor_id': 'v599'}}]
+    c = Card(fw, {DB: jsonl(records)})
+    assert build(fw) == 1 and c.files[INDEX].startswith(b'V599 P\t')
+
+
+def test_a_cancel_or_a_failed_write_or_close_leaves_no_index(fw):
+    c = card(fw, index=False)
+    op = fw.var('opra__op', Op)
+    op.cancel = 1
+    assert build(fw) == -1 and INDEX not in c.files
+    op.cancel = 0
+    fw.mock('fw_fwrite', lambda *_: 0)
+    assert build(fw) == -1 and INDEX not in c.files
+    fw.mock('fw_fwrite', c.fwrite)
+
+    def fclose(f, *_):
+        path = c.open[f][0]
+        c.fclose(f)
+        return -1 if path == INDEX else 0
+    fw.mock('fw_fclose', fclose)
     assert build(fw) == -1 and INDEX not in c.files
 
 
@@ -245,6 +366,50 @@ def test_no_database_opens_nothing(fw):
     find(fw, 'acme')
     del c.files[DB]
     assert fw.fn('opra_open', C.c_int, C.c_int)(0) == -1
+
+
+def test_no_index_or_a_result_out_of_range_opens_nothing(fw):
+    c = card(fw)
+    find(fw, 'acme')
+    assert hit(fw, -1) is None and fw.fn('opra_open', C.c_int, C.c_int)(-1) == -1
+    assert fw.fn('opra_choice', C.c_char_p, C.c_int, C.c_void_p)(-1, None) is None and take(fw, -1)[0] == 0
+    del c.files[INDEX]
+    assert fw.fn('opra_open', C.c_int, C.c_int)(0) == -1
+
+
+def test_a_name_of_letters_past_ascii_is_searched_as_it_is_and_a_long_one_cut(fw):
+    long = 'Acme ' + 'x' * 200 + ' End'
+    Card(fw, {INDEX: f'Café Über\t0 1\nAcme Solo\n{long}\t0 1\n'.encode()})
+    assert hits(fw, 'café') == ['Café Über'] and hits(fw, 'über') == []  # no case past ASCII
+    assert hits(fw, 'solo') == ['Acme Solo']  # a line without spans
+    assert hits(fw, 'xxx') == [long[:159]] and hits(fw, 'end') == []
+
+
+def test_a_database_shorter_than_its_index_or_a_span_too_long_leaves_its_presets_out(fw):
+    c = card(fw)
+    s = spans(RECORDS)
+    c.files[DB] = c.files[DB][:s[2][0] + 10]  # the second preset's record cut short
+    find(fw, 'acme')
+    assert choices(fw, 0) == (1, [('AutoEQ', 'Measured by X')])
+    c.files[INDEX] = f'Acme One\t{s[1][0]} 20000\t{s[1][0]} {s[1][1]}\n'.encode()
+    find(fw, 'acme')
+    assert choices(fw, 0) == (1, [('AutoEQ', 'Measured by X')])
+
+
+def test_a_product_opens_its_first_64_presets(fw):
+    c = card(fw)
+    s = spans(RECORDS)
+    c.files[INDEX] = ('Acme One' + f'\t{s[1][0]} {s[1][1]}' * 70 + '\n').encode()
+    find(fw, 'acme')
+    assert choices(fw, 0)[0] == 64
+
+
+def test_a_preset_without_details_is_named_by_its_author_alone(fw):
+    records = [eq('a::one', 'AutoEQ', '', ONE), {'type': 'product', 'id': 'a::one', 'data': {'name': 'One'}}]
+    records[0]['data'].pop('details')
+    Card(fw, {DB: jsonl(records)})
+    assert build(fw) == 1 and find(fw, 'one') == 1
+    assert choices(fw, 0) == (1, [('AutoEQ', '')]) and take(fw, 0)[2] == 'One (AutoEQ)'
 
 
 # The download.
@@ -350,6 +515,75 @@ def test_a_cancelled_download_leaves_no_part(fw):
     net.op.cancel = 1
     net.work()
     assert sorted(c.files) == []
+
+
+PART, NEW = DB + '.part', INDEX + '.part'
+
+
+def failing(fw, c, call, path):
+    """Card c's call (fopen, fwrite, fclose or rename) failing for path alone."""
+    def fopen(p, mode, *_):
+        return 0 if C.string_at(p).decode() == path else c.fopen(p, mode)
+
+    def fwrite(data, size, count, f, *_):
+        return 0 if c.open[f][0] == path else c.fwrite(data, size, count, f)
+
+    def fclose(f, *_):
+        name = c.open[f][0]
+        c.fclose(f)
+        return -1 if name == path else 0
+
+    def rename(old, new, *_):
+        if C.string_at(old).decode() == path:
+            return -1
+        c.files[C.string_at(new).decode()] = c.files.pop(C.string_at(old).decode())
+        return 0
+    fw.mock(f'fw_{call}', locals()[call])
+
+
+NEWER = [{'type': 'vendor', 'id': 'new', 'data': {'name': 'New'}}, *RECORDS]  # its spans are not RECORDS'
+
+
+@pytest.mark.parametrize('call, path', [('fwrite', PART), ('fclose', PART), ('fopen', NEW), ('rename', PART)])
+def test_a_card_that_fails_any_step_keeps_the_database_there_was(fw, call, path):
+    c = card(fw)
+    before = dict(c.files)
+    net = Net(fw, Curl(fw, jsonl(NEWER)))
+    failing(fw, c, call, path)
+    net.start()
+    net.work()
+    assert net.tick() == RET_REMOVE and net.told[-1] == 'Cannot write to the card' and c.files == before
+
+
+def test_a_download_cancelled_while_indexing_leaves_no_part(fw):
+    c = Card(fw, {})
+    net = Net(fw, Curl(fw, jsonl(RECORDS)))
+
+    def fopen(p, mode, *_):
+        if C.string_at(p).decode() == PART and C.string_at(mode) == b'rb':
+            net.op.cancel = 1  # the page closed as the index began
+        return c.fopen(p, mode)
+    fw.mock('fw_fopen', fopen)
+    net.start()
+    net.work()
+    assert net.op.stage == 1 and net.op.result == 5 and sorted(c.files) == []  # R_CANCEL
+
+
+def test_no_curl_handle_fails_the_download(fw):
+    c = card(fw)
+    before = dict(c.files)
+    net = Net(fw, Curl(fw, jsonl(RECORDS)))
+    fw.mock('fw_curl_easy_init', lambda *_: 0)
+    net.start()
+    net.work()
+    assert net.tick() == RET_REMOVE and net.told[-1] == 'OPRA download failed' and c.files == before
+
+
+def test_a_thread_that_cannot_start_starts_nothing(fw):
+    Card(fw, {})
+    net = Net(fw, Curl(fw))
+    fw.mock('fw_pthread_create', lambda *_: 11)  # EAGAIN
+    assert net.start() == 0 and not net.op.running and not net.timers
 
 
 # The EQ page's Presets → Search OPRA.
@@ -491,3 +725,58 @@ def test_closing_the_page_stops_the_download(fw):
     assert fw.var('opra__op', Op).running
     p.handler(p.page, EVT_DESTROY)()
     assert not fw.var('opra__op', Op).running and fw.calls('fw_pthread_join')
+
+
+def test_a_search_with_its_index_gone_says_so(fw):
+    p = eq_page(fw, with_db())
+    p.click('Search OPRA')
+    del p.card.files[INDEX]
+    search(p, 'acme')
+    assert p.ui.screen == OPRA and p.title() == 'Cannot read the OPRA database'
+
+
+def test_a_product_none_of_whose_presets_still_reads_says_so(fw):
+    p = eq_page(fw, with_db())
+    p.click('Search OPRA')
+    search(p, 'acme')
+    p.card.files[DB] = p.card.files[DB].replace(b'"peak_dip"', b'"notch"')
+    p.click('Acme One HD 600')
+    assert p.ui.screen == OPRA and p.title() == 'No usable presets'
+
+
+def test_a_download_that_cannot_start_shows_no_progress(fw):
+    p = eq_page(fw, {})
+    fw.mock('fw_pthread_create', lambda *_: 11)  # EAGAIN
+    p.click('Search OPRA')
+    p.click('Download OPRA database')
+    assert p.title() == 'Search OPRA' and not fw.fn('opra_busy', C.c_int)() and not p.pending('render')
+
+
+def test_update_is_dim_while_it_runs_and_the_title_shows_its_latest_progress(fw):
+    p = eq_page(fw, with_db())
+    threads = []
+    fw.mock('fw_pthread_create', lambda t, a, fn, arg, *_: threads.append(fn) or 0)
+    p.click('Search OPRA')
+    p.click('Update OPRA database')
+    assert p.title() == 'Downloading OPRA…' and p.captions() == ['Search', 'Update OPRA database']
+    p.click('Update OPRA database')
+    assert len(threads) == 1
+    op = fw.var('opra__op', Op)
+    op.bytes = 1000000
+    opra_tick(p)
+    op.bytes = 2000000
+    opra_tick(p)  # before the render the first asked for
+    assert len(p.pending('render')) == 1
+    p.settle()
+    assert p.title() == 'Downloading OPRA… 2.0 MB'
+
+
+def test_a_late_done_from_the_search_s_edit_does_nothing(fw):
+    p = eq_page(fw, with_db())
+    p.click('Search OPRA')
+    search(p, 'acme')
+    edit = p.edit()
+    p.click('Acme One HD 600')
+    p.handler(edit, EVT_VALUE_CHANGED)()
+    p.settle()
+    assert p.ui.screen == OPRA_PICK and p.captions() == ['AutoEQ Measured by X', 'oratory1990 Harman Target']
