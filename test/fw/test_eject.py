@@ -142,3 +142,53 @@ def test_no_card_mounted_stops_nothing(fw):
     card = Card(fw, mounts=b'ubi0:data /mnt/data ubifs rw 0 0\n')
     eject(fw)
     assert card.effects() == [('toast', 'No card to eject')]
+
+
+def busy(fw, links, proc=None):
+    """A press on a card that stays busy, pid 321's links as given: the toasts."""
+    card = Card(fw, umounts=(EBUSY,), proc={b'/proc': [b'321'], b'/proc/321/comm': b'sh\n', **(proc or {})},
+                links=links)
+    eject(fw)
+    return card.toasts()
+
+
+def test_a_program_working_in_the_card_s_top_folder_is_named(fw):
+    assert busy(fw, {b'/proc/321/cwd': b'/mnt/mmc'}) == ['Card is busy: sh']
+
+
+def test_a_program_run_from_the_card_is_named(fw):
+    assert busy(fw, {b'/proc/321/cwd': b'/', b'/proc/321/exe': b'/mnt/mmc/apps/x/run'}) == ['Card is busy: sh']
+
+
+def test_a_file_whose_path_only_starts_like_the_card_s_is_not_on_it(fw):
+    links = {b'/proc/321/cwd': b'/mnt/mmcx', b'/proc/321/fd/3': b'/mnt/mmc2/a.flac'}
+    assert busy(fw, links, {b'/proc/321/fd': [b'3']}) == ['Card is busy']
+
+
+def test_a_program_gone_before_its_files_are_read_is_passed_over(fw):
+    links = {b'/proc/322/fd/3': b'/mnt/mmc/a.flac'}
+    proc = {b'/proc': [b'321', b'322'], b'/proc/322/fd': [b'3'], b'/proc/322/comm': b'cp\n'}
+    assert busy(fw, links, proc) == ['Card is busy: cp']  # 321 has no fd folder
+
+
+def test_a_holder_whose_name_cannot_be_read_is_another_program(fw):
+    card = Card(fw, umounts=(EBUSY,), proc={b'/proc': [b'321'], b'/proc/321/fd': [b'3']},
+                links={b'/proc/321/fd/3': b'/mnt/mmc/a.flac'})
+    eject(fw)
+    assert card.toasts() == ['Card is busy: another program']
+
+
+def test_a_holder_s_empty_name_is_another_program(fw):
+    links = {b'/proc/321/fd/3': b'/mnt/mmc/a.flac'}
+    assert busy(fw, links, {b'/proc/321/fd': [b'3'], b'/proc/321/comm': b'\n'}) == ['Card is busy: another program']
+
+
+def test_a_holder_s_name_without_a_newline_is_whole(fw):
+    links = {b'/proc/321/fd/3': b'/mnt/mmc/a.flac'}
+    assert busy(fw, links, {b'/proc/321/fd': [b'3'], b'/proc/321/comm': b'rsync'}) == ['Card is busy: rsync']
+
+
+def test_a_busy_card_with_proc_unreadable_says_busy(fw):
+    card = Card(fw, umounts=(EBUSY,))
+    eject(fw)
+    assert card.toasts() == ['Card is busy']
