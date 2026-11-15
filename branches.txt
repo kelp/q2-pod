@@ -1,3 +1,4 @@
 # Feature branches merged into `integration`, in order.
 # Each branch starts from upstream/main and becomes one upstream PR.
 peq-import-all
+headphone-picker

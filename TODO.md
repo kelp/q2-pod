@@ -6,8 +6,8 @@ Personal tracking for work on kelp/q2-pod. This file lives on the orphan
 ## Features
 
 - [x] PEQ: Import all presets from `/EQ` in one action (`patch/peq_ui.c`)
-- [ ] PEQ: headphone picker in Quick Settings, so one output can switch
-      between presets for different headphones
+- [x] PEQ: headphone picker: Quick Settings' Playback hold opens Headphones,
+      the saved presets (branch `headphone-picker`)
 - [ ] PEQ: OPRA search over Wi-Fi
   - Data: `http://opra.roonlabs.net/database_v1.jsonl` (12.6 MB, about
     12,600 EQ presets for 6,200 products). Download it to the card; it does
@@ -62,3 +62,21 @@ Line numbers are from commit facf5b0b; check them again on current main.
 - [ ] Unverified: `navigation.c` `bt_volume_poll` rewrites config.ini
       several times a second while the headset volume changes. A risk only
       if stock `toolsWriteConfig` writes in place.
+
+## Test failures on sound (Debian 13), all also on upstream/main
+
+From a headless diagnosis on 2026-11-14; full report in sound's
+`~/q2-diagnose-report.md`. CI never runs these (they need the stock ZIP).
+
+- [ ] `test/patch.py`: the harness leaves CP0 Status.FR clear, but the
+      payload is `-mfp64`; clang 19 puts a double in `$f1` (uitofp in
+      `coverflow_position_offset`), a reserved instruction under FR=0.
+      Fix: set CU1|FR in `Machine.__init__`, as `test/hci_emu.py` does.
+      Confirmed: 3203 scenarios pass with it. Upstream PR candidate.
+- [ ] `test/player_seam.py`: FFmpeg 7.1 writes mvhd timescale 1000; the
+      script assumes 44100. Fix: `-movie_timescale 44100` on .m4a outputs.
+      Confirmed.
+- [ ] `test/build.py --build`: 60 px `scrsaver_playcover.png` corner alpha
+      is 2/255 under ImageMagick 7 Q16 (non-HDRI); the check wants 0.
+      Plausible fix: HDRI build, or relax the check to < 4/255.
+- [ ] docs/building.md: list `flac` among the test tools.
