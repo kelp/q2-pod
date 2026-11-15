@@ -77,6 +77,7 @@ def test_an_artist_with_no_similar_ones_has_none(fw):
     Net(fw)
     assert parse(fw, similar())[:2] == (0, [])
     assert parse(fw, b'{"similarartists":{"artist":"","@attr":{"artist":"Cher"}}}')[:2] == (0, [])
+    assert parse(fw, b'{"similarartists":{"@attr":{"artist":"Cher"}}}')[:2] == (0, [])
 
 
 @pytest.mark.parametrize('body, message', [(NOT_FOUND, 'The artist you supplied could not be found'),
@@ -108,7 +109,7 @@ def test_a_url_too_long_is_none(fw):
 
 
 @pytest.mark.parametrize('name, key', [('The Beatles', 'beatles'), ('beatles', 'beatles'), ('BEATLES', 'beatles'),
-                                       ('  the  Cure ', 'cure'), ('THE WHO', 'who'), ('The', 'the'), ('The The', 'the'),
+                                       ('  the  Cure ', 'cure'), ('THE WHO', 'who'), ('The', 'the'), ('The ', 'the'), ('The The', 'the'),
                                        ('Theatre of Tragedy', 'theatre of tragedy'), ('Björk', 'björk'), ('', '')])
 def test_an_artists_key_folds_case_and_a_leading_the(fw, name, key):
     out = C.create_string_buffer(SIM_NAME)
@@ -120,6 +121,12 @@ def test_a_key_may_be_made_in_place(fw):
     s = C.create_string_buffer(b'The Beatles', SIM_NAME)
     fw.fn('similar__sim_key', None, C.c_void_p, C.c_uint, C.c_void_p)(s, SIM_NAME, s)
     assert s.value == b'beatles'
+
+
+def test_a_key_is_cut_to_fit(fw):
+    out = C.create_string_buffer(8)
+    fw.fn('similar__sim_key', None, C.c_void_p, C.c_uint, C.c_char_p)(out, 4, b'Madonna')
+    assert out.value == b'mad'
 
 
 def mix(fw, artists, keys, own, rnd=lambda n: n - 1):
@@ -363,6 +370,12 @@ def test_usb_storage_stops_it_quietly(fw, mcl):
     assert q.ui.fire('sim_wait') == 0 and q.ui.toasts == ['Asking Last.fm…'] and not q.ui.played
 
 
+def test_usb_storage_with_nothing_asked_joins_nothing(fw, mcl):
+    Q2(fw, mcl)
+    fw.fn('similar_stop', None)()
+    assert not fw.calls('fw_pthread_join')
+
+
 def test_busy_while_it_asks(fw, mcl):
     q = Q2(fw, mcl)
     busy = fw.fn('similar_busy', C.c_int)
@@ -372,3 +385,76 @@ def test_busy_while_it_asks(fw, mcl):
     q.answer()
     assert busy() == 0
 
+
+
+def test_the_url_keeps_the_unreserved_marks_as_they_are(fw):
+    out = C.create_string_buffer(2048)
+    assert fw.fn('similar__sim_url', C.c_int, C.c_void_p, C.c_uint, C.c_char_p, C.c_char_p)(out, 2048, b'a-b.c_d~e f', b'k') == 1
+    assert '&artist=a-b.c_d~e%20f&' in out.value.decode()
+
+
+def test_an_error_reply_without_a_message_is_refused_with_none(fw):
+    Net(fw)
+    assert parse(fw, b'{"error":29}') == (SIM_REFUSED, [], '')
+
+
+def test_a_similar_artist_without_a_name_is_passed_over(fw):
+    Net(fw)
+    body = json.dumps({'similarartists': {'artist': [{'match': '1'}, {'name': 7}, {'name': ''}, {'name': 'Madonna'}]}}).encode()
+    assert parse(fw, body)[:2] == (1, ['Madonna'])
+
+
+XFER = C.CFUNCTYPE(C.c_int, C.c_void_p, C.c_longlong, C.c_longlong, C.c_longlong, C.c_longlong)
+
+
+def test_the_transfer_goes_on_until_usb_storage_stops_it(fw, mcl):
+    """curl's progress callback (XFERINFOFUNCTION) answers 0 to go on; once USB storage stops the request, 1, and
+    curl ends the transfer."""
+    q, said = Q2(fw, mcl), []
+    def reply(url):
+        said.append(XFER(q.net.opts[20219])(None, 0, 0, 0, 0))
+        return None if said[-1] else similar('Madonna')
+    q.net.replies[LASTFM] = (reply,)
+    q.press()
+    q.answer()
+    assert said == [0] and q.ui.played
+    q.press()
+    fw.fn('similar_stop', None)()  # its join runs the worker, which sees the stop at the progress call
+    assert said == [0, 1] and len(q.ui.played) == 1
+
+
+def test_a_reply_too_big_to_keep_is_no_answer(fw, mcl):
+    q = Q2(fw, mcl, replies={LASTFM: similar('Madonna') + b' ' * (512 << 10)})  # SIM_MAX: 512 KB
+    q.press()
+    q.answer()
+    assert q.ui.toasts == ['Asking Last.fm…', "Can't reach Last.fm"] and not q.ui.played
+
+
+def test_no_curl_handle_is_no_answer(fw, mcl):
+    q = Q2(fw, mcl)
+    fw.mock('fw_curl_easy_init', lambda *_: 0)
+    q.press()
+    q.answer()
+    assert q.ui.toasts == ['Asking Last.fm…', "Can't reach Last.fm"] and not q.net.urls and not q.ui.played
+
+
+@pytest.mark.parametrize('queue, pos', [(None, 0), ([b'/m/cher/believe.flac'], 1)])
+def test_nothing_playing_asks_nothing(fw, mcl, queue, pos):
+    q = Q2(fw, mcl)
+    fw.var('fw_ctx_mcl_pdeqplaylist', C.c_uint).value = q.ui.deques.new([q.playing]) if queue else 0
+    mcl.pos = pos
+    q.press()
+    assert q.ui.toasts == ['This song has no artist'] and not fw.calls('fw_pthread_create')
+
+
+def test_a_mix_holds_only_songs_not_videos_or_other_records(fw, mcl):
+    q = Q2(fw, mcl, songs=[])
+    make = q.song
+    songs = [q.playing, make(b'/m/cher/1.flac', b'C1', b'Cher'), make(b'/m/madonna/1.flac', b'M1', b'Madonna'),
+             make(b'/m/madonna/v.mp4', b'Video', b'Madonna'), make(b'/m/madonna', b'Folder', b'Madonna', kind=1)]
+    q.library = Library(fw, q.ui, songs)
+    q.press()
+    q.answer()
+    artists, queue, _, _ = q.played()
+    assert sorted(field(r, 'path') for r in queue) == [b'/m/cher/1.flac', b'/m/madonna/1.flac']
+    assert q.ui.toasts[-1] == 'Playing 2 songs by 2 artists'
