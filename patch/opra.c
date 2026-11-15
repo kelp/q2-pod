@@ -416,7 +416,8 @@ static int stopped(void *unused, long long a, long long b, long long c, long lon
 }
 
 /* The download to OPRA_PART, indexed to OPRA_NEW, both renamed over the last only when whole: a
- * failure or a cancel keeps the database there was. */
+ * failure or a cancel keeps the database there was, unless the database's rename alone works: then
+ * its old index goes. */
 static void *worker(void *unused) {
     long code = 0;
     int err = 1;
@@ -456,8 +457,10 @@ static void *worker(void *unused) {
         int n = opra_index(OPRA_PART, OPRA_NEW);
         op.result = op.cancel ? R_CANCEL : n < 0 ? R_CARD : !n ? R_DATA : 0;
     }
-    if (!op.result && (rename(OPRA_PART, OPRA_DB) || rename(OPRA_NEW, OPRA_INDEX)))
+    if (!op.result && rename(OPRA_PART, OPRA_DB))
         op.result = R_CARD;
+    else if (!op.result && rename(OPRA_NEW, OPRA_INDEX))
+        op.result = R_CARD, unlink(OPRA_INDEX); /* the old one's spans misread the new database */
     if (op.result)
         unlink(OPRA_PART), unlink(OPRA_NEW);
     else
