@@ -7808,7 +7808,7 @@ cm=classic_light_on(classic_light_new(ShuffleMachine))  # its own names: the cas
 cview=cm.node('scroll_view','scroll_view_localmusic',[cm.node('list_item') for _ in range(11)]); cm.top=cm.node('window','localmusic_page',[cview])
 assert cm.call(address=HOOKS['localmusic_page_init'][0],args=(cm.top,5,0,0),gap=0)==0
 ckids=cm.nodes[cview]['children']; cbutton=cm.nodes[ckids[0]]['children'][0]; clabel=cm.nodes[cbutton]['children'][0]
-assert len(ckids)==18 and cm.nodes[clabel]['text']=='Search' and cm.nodes[cm.nodes[cm.nodes[ckids[1]]['children'][0]]['children'][1]]['text']=='Shuffle'
+assert len(ckids)==19 and cm.nodes[clabel]['text']=='Search' and cm.nodes[cm.nodes[cm.nodes[ckids[1]]['children'][0]]['children'][1]]['text']=='Shuffle'
 assert cm.handler(cbutton,O['EVT_CLICK'])==(syms['stock_search'],0); passed()
 def home_settings(full,modern=0):
         # Home's Rockbox row shows only while the card has Rockbox: hidden, it moves after Settings, so the
@@ -7903,7 +7903,7 @@ f,ctx=m.handler(named(m,m.top,'img_settings'),O['EVT_CLICK']); m.call(address=f,
 m.call(O['KEY_RETURN']); assert ltitled()=='Q2 Pod'
 # Open it again: the list comes back with the same rows (the real constructor rebuilds them, the mock keeps them; stock's constructor runs, its count no longer stock's; Classic's Search first), in Home's shape.
 lbefore=list(m.nodes[lview]['children']); m.calls=[]; f,ctx=m.handler(named(m,m.top,'img_library'),O['EVT_CLICK']); assert m.call(address=f,args=(ctx,m.event,0,0),gap=0)==0
-assert m.nodes[lview]['children']==lbefore and len(lbefore)==18 and any(c[0]=='stock_localmusic' for c in m.calls) and not any(c[0]=='widget_restack' for c in m.calls)
+assert m.nodes[lview]['children']==lbefore and len(lbefore)==19 and any(c[0]=='stock_localmusic' for c in m.calls) and not any(c[0]=='widget_restack' for c in m.calls)
 assert m.nodes[lib]['visible'] and ltitled()=='Library'
 for r in lbefore:
     lb=m.nodes[r]['children'][0]; assert m.get(lb+O['W_X'])==0 and m.get(lb+O['W_W'])==O['HOME_SPLIT_W'],lb
@@ -8507,7 +8507,7 @@ m.found=[m.song(n) for n in 'ABCDE']; m.word(m.found[2]+O['REC_CUE_END'],900)
 m.lengths={'/p/A':700,'/p/B':300}
 m.top=m.node('window','localmusic_page'); view=m.node('scroll_view','scroll_view_localmusic',[m.node('list_item') for _ in range(11)])
 m.nodes[m.top]['children']=[view]; m.call(address=HOOKS['localmusic_page_init'][0],args=(m.top,5,0,0),gap=0)
-f,ctx=m.handler(m.nodes[m.nodes[view]['children'][14]]['children'][0],O['EVT_CLICK'])
+f,ctx=m.handler(m.nodes[m.nodes[view]['children'][15]]['children'][0],O['EVT_CLICK'])
 assert m.call(address=f,args=(ctx,m.event,0,0),gap=0)==0; m.page=m.top
 assert m.nodes[m.page]['name']=='longsongs_page' and m.texts()==['Measuring songs…','Cancel'] and len(m.threads)==1
 worker,arg=m.threads[0]; assert m.call(address=worker,args=(arg,0,0,0),gap=0)==0 and sorted(m.probed)==['/p/A','/p/B','/p/C','/p/D']
@@ -8523,7 +8523,7 @@ assert not m.threads and not m.probed and m.texts()==want; m.close(); passed()
 m=RateMachine(); m.found=[m.song(n) for n in 'AB']; m.lengths={'/p/A':700,'/p/B':900}
 m.top=m.node('window','localmusic_page'); view=m.node('scroll_view','scroll_view_localmusic',[m.node('list_item') for _ in range(11)])
 m.nodes[m.top]['children']=[view]; m.call(address=HOOKS['localmusic_page_init'][0],args=(m.top,5,0,0),gap=0)
-f,ctx=m.handler(m.nodes[m.nodes[view]['children'][14]]['children'][0],O['EVT_CLICK']); m.call(address=f,args=(ctx,m.event,0,0),gap=0); m.page=m.top
+f,ctx=m.handler(m.nodes[m.nodes[view]['children'][15]]['children'][0],O['EVT_CLICK']); m.call(address=f,args=(ctx,m.event,0,0),gap=0); m.page=m.top
 cancel=m.nodes[m.find('scroll_view')]['children'][0]; g,c=m.handler(cancel,O['EVT_CLICK']); m.call(address=g,args=(c,m.event,0,0),gap=0)
 worker,arg=m.threads[0]; m.call(address=worker,args=(arg,0,0,0),gap=0); assert m.probed==[]  # cancelled before the first
 m.advance(250); assert m.texts()==['Long Songs','No songs over 10 minutes'] and m.joins==[77]; passed()
@@ -8531,7 +8531,7 @@ m.advance(250); assert m.texts()==['Long Songs','No songs over 10 minutes'] and 
 m=RateMachine(); m.found=[m.song('A'),m.song('A')]; m.lengths={'/p/A':1300}; m.word(m.found[1]+O['REC_CUE_START'],600)
 m.top=m.node('window','localmusic_page'); view=m.node('scroll_view','scroll_view_localmusic',[m.node('list_item') for _ in range(11)])
 m.nodes[m.top]['children']=[view]; m.call(address=HOOKS['localmusic_page_init'][0],args=(m.top,5,0,0),gap=0)
-f,ctx=m.handler(m.nodes[m.nodes[view]['children'][14]]['children'][0],O['EVT_CLICK']); m.call(address=f,args=(ctx,m.event,0,0),gap=0); m.page=m.top
+f,ctx=m.handler(m.nodes[m.nodes[view]['children'][15]]['children'][0],O['EVT_CLICK']); m.call(address=f,args=(ctx,m.event,0,0),gap=0); m.page=m.top
 worker,arg=m.threads[0]; m.call(address=worker,args=(arg,0,0,0),gap=0); m.advance(250)
 assert duration_pairs(m.files[DUR_CACHE],['/p/A'])=={'/p/A':1300} and len(m.files[DUR_CACHE])==8+24 and m.probed==['/p/A']
 assert m.texts()==['Long Songs','A','Artist · 21:40','A','Artist · 11:40']; passed()
@@ -8541,10 +8541,10 @@ assert m.texts()==['Long Songs','A','Artist · 21:40','A','Artist · 11:40']; pa
 # starts, a second press finds it running, and a timer reports the result once the thread ends.
 m=ShuffleMachine(); m.config.update(USER='u',PASSWORD='p',API_KEY='k')  # no API_SECRET: no row
 view=m.node('scroll_view','scroll_view_localmusic',[m.node('list_item') for _ in range(11)]); m.top=m.node('window','localmusic_page',[view])
-assert m.call(address=HOOKS['localmusic_page_init'][0],args=(m.top,5,0,0),gap=0)==0 and len(m.nodes[view]['children'])==17
+assert m.call(address=HOOKS['localmusic_page_init'][0],args=(m.top,5,0,0),gap=0)==0 and len(m.nodes[view]['children'])==18
 assert ('/mnt/mmc/.scrobble.ini','LASTFM','API_SECRET','') in m.config_reads
 m.config['TOKEN']='tok'; m.nodes[view]['children']=[m.node('list_item') for _ in range(11)]
-assert m.call(address=HOOKS['localmusic_page_init'][0],args=(m.top,5,0,0),gap=0)==0 and len(m.nodes[view]['children'])==18
+assert m.call(address=HOOKS['localmusic_page_init'][0],args=(m.top,5,0,0),gap=0)==0 and len(m.nodes[view]['children'])==19
 button=m.nodes[m.nodes[view]['children'][-2]]['children'][0]; icon,label=m.nodes[button]['children']
 assert m.nodes[icon]['image']=='local_scrobble' and m.nodes[label]['text']=='Upload Scrobbles' and not m.nodes[button].get('name')
 library_geometry(m,m.nodes[view]['children'][-2])
@@ -8571,7 +8571,7 @@ m=PhotosMachine(tree,data)
 view=m.node('scroll_view','scroll_view_localmusic',[m.node('list_item') for _ in range(11)]); m.top=m.node('window','localmusic_page',[view])
 assert m.call(address=HOOKS['localmusic_page_init'][0],args=(m.top,5,0,0),gap=0,count=5_000_000)==0
 button=m.nodes[m.nodes[view]['children'][-2]]['children'][0]; icon,label,into=m.nodes[button]['children']
-assert m.nodes[icon]['image']=='local_photos' and m.nodes[label]['text']=='Photos' and len(m.nodes[view]['children'])==18
+assert m.nodes[icon]['image']=='local_photos' and m.nodes[label]['text']=='Photos' and len(m.nodes[view]['children'])==19
 f,ctx=m.handler(button,O['EVT_CLICK']); assert m.call(address=f,args=(ctx,m.event,0,0),gap=0,count=5_000_000)==0
 page=m.top; assert m.nodes[page]['name']=='photos_page' and m.nodes[page]['style:normal:bg_color']==-0x1000000
 albums,grid,viewer=m.nodes[page]['children']; assert not m.nodes[grid]['visible'] and not m.nodes[viewer]['visible']
@@ -8695,7 +8695,7 @@ m=BooksMachine(tree,files)
 view=m.node('scroll_view','scroll_view_localmusic',[m.node('list_item') for _ in range(11)]); m.top=m.node('window','localmusic_page',[view])
 assert m.call(address=HOOKS['localmusic_page_init'][0],args=(m.top,5,0,0),gap=0,count=5_000_000)==0
 button=m.nodes[m.nodes[view]['children'][-2]]['children'][0]; icon,label,into=m.nodes[button]['children']
-assert m.nodes[icon]['image']=='local_books' and m.nodes[label]['text']=='Books' and len(m.nodes[view]['children'])==18
+assert m.nodes[icon]['image']=='local_books' and m.nodes[label]['text']=='Books' and len(m.nodes[view]['children'])==19
 library_geometry(m,m.nodes[view]['children'][-2])
 f,ctx=m.handler(button,O['EVT_CLICK']); assert m.call(address=f,args=(ctx,m.event,0,0),gap=0,count=5_000_000)==0
 page=m.page=m.top; assert m.nodes[page]['name']=='books_page' and m.nodes[page]['style:normal:bg_color']==-0x1000000
@@ -8893,7 +8893,7 @@ m=BooksMachine(tree,{})
 view=m.node('scroll_view','scroll_view_localmusic',[m.node('list_item') for _ in range(11)]); m.top=m.node('window','localmusic_page',[view])
 assert m.call(address=HOOKS['localmusic_page_init'][0],args=(m.top,5,0,0),gap=0,count=5_000_000)==0
 button=m.nodes[m.nodes[view]['children'][-2]]['children'][0]; icon,label,into=m.nodes[button]['children']
-assert m.nodes[icon]['image']=='local_videos' and m.nodes[label]['text']=='Videos' and len(m.nodes[view]['children'])==18
+assert m.nodes[icon]['image']=='local_videos' and m.nodes[label]['text']=='Videos' and len(m.nodes[view]['children'])==19
 f,ctx=m.handler(button,O['EVT_CLICK']); m.calls=[]
 assert m.call(address=f,args=(ctx,m.event,0,0),gap=0)==0 and [m.text(c[1]) for c in m.calls if c[0]=='navigator_to']==['folder_page']; m.page=m.node('window','folder_page'); passed()
 # Folder view's video (books_video) starts the same q2video, with no Videos page open; anything else is left to stock.
