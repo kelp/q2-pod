@@ -968,6 +968,70 @@ def test_return_from_headphones_closes_the_page_and_the_next_open_is_the_eq_page
     assert p.ui.screen == HOME and p.ui.tab == SIMPLE
 
 
+def test_headphones_marks_only_the_same_bands_and_balance_as_playing(fw):
+    balanced, two = hd600(fw), hd600(fw)
+    balanced.balance = 2
+    two.count, two.bands[1] = 2, Band(1, 0, 3000.0, 1.0, 1.0)
+    files = {f'{SAVED}/{name}.peq': b'Q2PEQ02\0' + bytes(x) for name, x in [('Balanced', balanced), ('HD600', hd600(fw)), ('Two', two)]}
+    p = headphones(fw, state(fw, EQ_PEQ, peq=hd600(fw)), files)
+    assert p.captions() == ['EQ settings', 'EQ Off', 'Balanced', 'HD600 Playing', 'Two']
+
+
+@pytest.mark.parametrize('cause', ['flag clear', 'no active file'])
+def test_headphones_marks_eq_off_when_the_stock_flag_is_clear_or_nothing_is_saved(fw, cause):
+    files = {f'{SAVED}/HD600.peq': b'Q2PEQ02\0' + bytes(hd600(fw))}
+    p = page(fw, state(fw, EQ_PEQ, peq=hd600(fw)), files)
+    if cause == 'flag clear':
+        fw.var('g_equalizer_flag', C.c_ubyte).value = 0  # PEQ saved on, but not playing
+    else:
+        del p.card.files[ACTIVE]
+    fw.fn('peq_headphones', None)()
+    p.open()
+    assert p.captions() == ['EQ settings', 'EQ Off Playing', 'HD600']
+
+
+def test_a_headphone_that_cant_be_applied_says_so_and_stays(fw):
+    files = {f'{SAVED}/HD600.peq': b'Q2PEQ02\0' + bytes(hd600(fw))}
+    p = headphones(fw, state(fw, EQ_OFF), files)
+    before = p.card.files[ACTIVE]
+    p.card.fail_writes = True
+    p.click('HD600')
+    assert p.title() == 'Apply failed; active EQ unchanged' and p.ui.screen == HEADPHONES
+    assert p.card.files[ACTIVE] == before and not fw.calls('navigator_back')
+
+
+def test_eq_off_that_cant_be_saved_says_so_and_stays(fw):
+    p = headphones(fw, state(fw, EQ_PEQ, peq=hd600(fw)), {f'{SAVED}/HD600.peq': b'Q2PEQ02\0' + bytes(hd600(fw))})
+    p.card.fail_writes = True
+    p.click('EQ Off')
+    assert p.title() == 'Switch failed; EQ unchanged' and p.ui.screen == HEADPHONES
+    assert p.card.state().mode == EQ_PEQ and not fw.calls('navigator_back')
+
+
+def test_headphones_pages_back(fw):
+    p = headphones(fw, files={f'{SAVED}/{k:03}.peq': b'x' for k in range(130)})
+    assert p.captions()[2:4] == ['Next page', '000']
+    p.click('Next page')
+    p.click('Previous page')
+    assert p.ui.file_page == 0 and p.captions()[2:4] == ['Next page', '000']
+
+
+def test_headphones_opened_from_advanced_goes_on_to_advanced_and_reopens_there(fw):
+    p = page(fw).advanced()
+    p.handler(p.page, EVT_DESTROY)()
+    fw.fn('peq_headphones', None)()
+    p.open()
+    assert p.ui.screen == HEADPHONES
+    p.click('EQ settings')
+    assert p.ui.tab == ADVANCED and p.ui.screen == HOME
+    p.handler(p.page, EVT_DESTROY)()
+    fw.fn('peq_headphones', None)()
+    p.open()
+    p.handler(p.page, EVT_DESTROY)()  # closed on Headphones
+    p.open()
+    assert p.ui.tab == ADVANCED and p.ui.screen == HOME
+
+
 def test_no_imports_says_why(fw):
     p = page(fw).advanced()
     p.click('Presets')
