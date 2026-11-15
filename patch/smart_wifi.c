@@ -99,8 +99,8 @@ static int smart_needed(void) {
     return g_usbdet_value || g_airplayflag || g_dlnaflag || g_synclinkflag == 2 ||
            g_syncLink_status || g_wifitransport_flag || airplayGetFlag() == 2 || type - 2 < 2 ||
            type - 0xf1 < 2 || spot_running() || radio_status() == 2 || addon_running() ||
-           scrobble_busy() || netupdate_busy() || album_lyrics_busy() || tidal_busy() ||
-           sw.hold_timer || (g_syncnettime_flag && networkGetConnectStatus() > 0) ||
+           scrobble_busy() || netupdate_busy() || album_lyrics_busy() || similar_busy() ||
+           tidal_busy() || sw.hold_timer || (g_syncnettime_flag && networkGetConnectStatus() > 0) ||
            net_page_open();
 }
 
