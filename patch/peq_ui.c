@@ -227,8 +227,10 @@ static int action(void *ctx, event_t *event);
 /* A row: the caption on the left, white or, for display-only rows and off bands (DIM), grey, and
  * the value, if any, in grey against the right edge, or left of stock's list_into chevron on a row
  * that opens a screen or picker (INTO: coverflow.c's row_into). Returns the last label, the
- * value's if any. Rows start under the graph where it heads the list. */
-enum { DIM = 1, INTO = 2, SMALL = 4, LONG = 8, NAME = 16 };
+ * value's if any. Rows start under the graph where it heads the list. WIDE: a LONG row whose
+ * caption is of any length too (an OPRA preset's author), cut with an ellipsis where its value
+ * starts, at x 166 as About's rows (navigation.c), past Rtings/AutoEQ's 112 px at x 36. */
+enum { DIM = 1, INTO = 2, SMALL = 4, LONG = 8, NAME = 16, WIDE = 32 };
 /* The curve's height in the list: whole rows of the theme's, so whole rows fill it at either
  * end. */
 static int graph_head(void) {
@@ -241,14 +243,14 @@ static widget_t *fit(widget_t *label) {
     return label;
 }
 /* LONG: a value of any length (a file's name), in stock's right-aligned ellipsis label
- * (navigation.c's list_value), grey beside the chevron. It stops short of the caption at x 130,
- * past "Presets" in the widest row font, Classic's 27 px (ends at x 118). Stock's label keeps 2 px
- * each side; none on the right ends a name that fits where the row's other values do. Stock draws a
- * cut one from the label's left, so it can end up to a letter short of them, and scrolls it while
- * the row is selected (only_focus: the marquee's). ponytail: a fixed column, not the caption's
- * measured width, so a theme with a wider row font has to move it. */
-static widget_t *long_value(widget_t *item, const char *value, int rh) {
-    widget_t *label = hscroll_label_create(item, 130, 0, 316 - 130, rh);
+ * (navigation.c's list_value), grey beside the chevron. It stops short of the caption at x 130
+ * (WIDE: x 166), past "Presets" in the widest row font, Classic's 27 px (ends at x 118). Stock's
+ * label keeps 2 px each side; none on the right ends a name that fits where the row's other values
+ * do. Stock draws a cut one from the label's left, so it can end up to a letter short of them, and
+ * scrolls it while the row is selected (only_focus: the marquee's). ponytail: a fixed column, not
+ * the caption's measured width, so a theme with a wider row font has to move it. */
+static widget_t *long_value(widget_t *item, const char *value, int rh, int x) {
+    widget_t *label = hscroll_label_create(item, x, 0, 316 - x, rh);
     widget_use_style(label, "s_scrlabel_white20r");
     widget_set_prop_int(label, "style:normal:text_color", (int)CF_GREY);
     widget_set_prop_int(label, "style:normal:margin_right", 0);
@@ -264,8 +266,14 @@ static widget_t *row_dim(widget_t *view, int index, const char *text, const char
     widget_t *item = list_item_create(view, 0, (ui.graph ? graph_head() : 0) + index * rh, 375, rh),
              *label = 0;
     widget_use_style(item, "s_listitem_black");
+    int x = flags & WIDE ? 166 : 130; /* a LONG value's */
     for (int i = 0; i < 1 + (value && !(flags & LONG)); ++i) {
-        if (flags & NAME) {
+        if (flags & WIDE) {
+            label = hscroll_label_create(item, ROW_X, 0, x - 4 - ROW_X, rh);
+            widget_use_style(label, "s_scrlabel_white20l");
+            hscroll_label_set_only_focus(label, 1);
+            hscroll_label_set_ellipses(label, 1);
+        } else if (flags & NAME) {
             /* a caption of any length (a file's name), in stock's ellipsis label as long_value's:
              * its 2 px each side put its text in the plain label's box */
             label = hscroll_label_create(item, ROW_X - 2, 0, 375 - 2 * ROW_X + 4, rh);
@@ -283,7 +291,7 @@ static widget_t *row_dim(widget_t *view, int index, const char *text, const char
         theme_font(label, ROLE_TITLE, FONT_ROW); /* by its text */
         if (!i && flags & SMALL) widget_set_prop_int(label, "style:normal:font_size", 16);
     }
-    if (value && flags & LONG) label = long_value(item, value, rh);
+    if (value && flags & LONG) label = long_value(item, value, rh, x);
     if (flags & INTO) row_into(item, rh);
     widget_on(item, EVT_CLICK, action, (void *)(long)id);
     return label;
@@ -1089,7 +1097,7 @@ static int render(const void *unused) {
     } else if (ui.screen == OPRA_PICK) { /* each by its author, as OPRA's licence asks */
         const char *details, *author;
         for (int i = 0; (author = opra_choice(i, &details)); ++i)
-            row_dim(view, n++, author, details, i, LONG);
+            row_dim(view, n++, author, details, i, LONG | WIDE);
     } else if (ui.screen == SAVES) {
         for (int i = 0; i < 10; ++i) {
             snprintf(text, sizeof(text), tr("Save as Manual %02d"), i + 1);
