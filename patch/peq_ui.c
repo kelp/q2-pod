@@ -56,12 +56,15 @@ enum {
     ADJUST,
     STOCKS,
     RENAMES,
-    NAMING
-};
+    NAMING,
+    OPRA,
+    OPRA_PICK
+}; /* opra.c's database: its search, and a product's presets */
 /* clang-format off */
 enum { BACK = 1000, APPLY, RESET, BYPASS, PER_OUTPUT, MENU, IMPORT, SAVE, ENABLE, TYPE, RAISE, LOWER, TYPED, CHANNEL, STEP,
        YES, CANCEL, DELETE, BALANCE, PREAMP, GAIN, /* these three open the picker, in picks[] order */
-       FREQUENCY, QUALITY, /* and these two the value menu */ KEYBOARD, STOCK, FILE_PREV, FILE_NEXT, RENAME, NAMED };
+       FREQUENCY, QUALITY, /* and these two the value menu */ KEYBOARD, STOCK, FILE_PREV, FILE_NEXT, RENAME, NAMED,
+       OPRA_OPEN, OPRA_GET, OPRA_EDIT, OPRA_FIND };
 /* clang-format on */
 #define FILE_PAGE 128
 #define GRAPH_W (375 - 2 * PEQ_GRAPH_X)
@@ -366,6 +369,33 @@ static int named(void *ctx, void *event) {
     return 0;
 }
 
+/* Search OPRA's edit: its Done searches, as the rename edit's renames. typing: its Search row was
+ * picked, so the next render opens the keyboard on it. */
+static int typing;
+static int opra_done(void *ctx, void *event) {
+    if (ui.edit && ui.screen == OPRA) action((void *)(long)OPRA_FIND, 0);
+    return 0;
+}
+
+/* The download's progress and end, told by opra.c: the title's while Search OPRA shows. */
+static void opra_told(const char *text) {
+    if (ui.screen != OPRA || !ui.page) return;
+    snprintf(ui.status, sizeof(ui.status), "%s", text);
+    if (!ui.timer) ui.timer = timer_add(render, 0, 1);
+}
+
+/* The edit's text searched, unless empty (Return's cancel, search_key) or the search shown. */
+static void opra_search(void) {
+    char text[160];
+    if (!ui.edit || widget_get_text_utf8(ui.edit, text, sizeof text)) text[0] = 0;
+    if (!text[0] || (!strcmp(text, opra_query()) && opra_hit(0))) return;
+    int n = opra_find(text);
+    if (n < 0)
+        snprintf(ui.status, sizeof(ui.status), "Cannot read the OPRA database");
+    else if (!n)
+        snprintf(ui.status, sizeof(ui.status), "No matches for %.100s", text);
+}
+
 /* Open T9's "123" page and select the old value so the first key replaces it.
  * The keyboard may open after focus; look for it every 16 ms, up to 20 times. It is the input
  * method's own, for this edit: a lookup by name could find the last one while it still closes. */
@@ -590,6 +620,7 @@ static int action(void *ctx, void *event) {
     }
     if (id == NAMED && ui.screen != NAMING)
         return 0; /* the row's click after the edit's blur renamed */
+    if (id == OPRA_GET && !need_link(action, ctx)) return 0; /* Smart Wi-Fi's link, or none */
     peq_band *b = &ui.draft.bands[ui.band];
     ui.status[0] = 0;
     ui.tabs = 0;
@@ -606,6 +637,8 @@ static int action(void *ctx, void *event) {
             ui.screen = BAND;
         else if (ui.screen == NAMING)
             ui.screen = RENAMES;
+        else if (ui.screen == OPRA_PICK)
+            ui.screen = OPRA;
         else
             ui.screen =
                 ui.from_simple || ui.screen == BAND || ui.screen == PRESETS ? HOME : PRESETS;
@@ -624,6 +657,14 @@ static int action(void *ctx, void *event) {
         ui.screen = RENAMES;
     else if (id == NAMED)
         rename_preset();
+    else if (id == OPRA_OPEN)
+        ui.screen = OPRA;
+    else if (id == OPRA_EDIT)
+        typing = 1;
+    else if (id == OPRA_FIND)
+        opra_search();
+    else if (id == OPRA_GET && opra_update(opra_told))
+        snprintf(ui.status, sizeof(ui.status), "Downloading OPRA\xe2\x80\xa6");
     else if (id >= BALANCE && id <= GAIN) {
         ui.pick = id;
         ui.screen = PICK;
@@ -707,6 +748,18 @@ static int action(void *ctx, void *event) {
         } else if (ui.screen == SAVES && id < 10) {
             snprintf(ui.destination, sizeof(ui.destination), PEQ_SAVED "/Manual %02d.peq", id + 1);
             ui.candidate = ui.draft;
+            save_candidate(0);
+        } else if (ui.screen == OPRA && opra_hit(id)) {
+            int n = opra_open(id);
+            if (n > 0)
+                ui.screen = OPRA_PICK;
+            else
+                snprintf(ui.status, sizeof(ui.status),
+                         n ? "Cannot read the OPRA database" : "No usable presets");
+        } else if (ui.screen == OPRA_PICK && opra_choice(id, 0)) {
+            char name[200];
+            opra_take(id, &ui.candidate, name, sizeof name);
+            snprintf(ui.destination, sizeof(ui.destination), PEQ_SAVED "/%s.peq", name);
             save_candidate(0);
         } else if (file < ui.count && ui.screen == IMPORTS) {
             char path[600];
@@ -912,6 +965,16 @@ static int render(const void *unused) {
         row(view, n++, "Cancel replacement", CANCEL);
     } else if (ui.screen == STOCKS) {
         for (int i = 0; i < STOCK_N; ++i) row(view, n++, stock_names[i], i);
+    } else if (ui.screen == OPRA) { /* the search in the edit over the title (below) */
+        int ready = opra_ready(), busy = opra_busy();
+        if (ready) row(view, n++, "Search", OPRA_EDIT);
+        for (int i = 0; ready && opra_hit(i); ++i) fit(row(view, n++, opra_hit(i), i));
+        row_dim(view, n++, ready ? "Update OPRA database" : "Download OPRA database", 0,
+                busy ? -1 : OPRA_GET, 0);
+    } else if (ui.screen == OPRA_PICK) { /* each by its author, as OPRA's licence asks */
+        const char *details, *author;
+        for (int i = 0; (author = opra_choice(i, &details)); ++i)
+            row_dim(view, n++, author, details, i, LONG);
     } else if (ui.screen == SAVES) {
         for (int i = 0; i < 10; ++i) {
             snprintf(text, sizeof(text), "Save as Manual %02d", i + 1);
@@ -921,6 +984,7 @@ static int render(const void *unused) {
         if (ui.screen == PRESETS) {
             row_dim(view, n++, "Stock presets", 0, STOCK, INTO);
             row_dim(view, n++, "Import from SD /EQ", 0, IMPORT, INTO);
+            row_dim(view, n++, "Search OPRA", 0, OPRA_OPEN, INTO);
             row_dim(view, n++, "Save editor preset", 0, SAVE, INTO);
             row_dim(view, n++, "Rename a preset", 0, RENAME, INTO);
             row_dim(view, n++, "Delete a preset", 0, DELETE, INTO);
@@ -966,7 +1030,11 @@ static int render(const void *unused) {
              ui.count > FILE_PAGE)
         snprintf(text, sizeof(text), "Presets %d/%d", ui.file_page + 1,
                  (ui.count - 1) / FILE_PAGE + 1);
-    else if (ui.screen != HOME && ui.screen != ADJUST && ui.screen != NAMING)
+    else if (ui.screen == OPRA_PICK)
+        snprintf(text, sizeof(text), "%s", opra_opened());
+    else if (ui.screen == OPRA && !opra_ready())
+        snprintf(text, sizeof(text), "Search OPRA");
+    else if (ui.screen != HOME && ui.screen != ADJUST && ui.screen != NAMING && ui.screen != OPRA)
         snprintf(text, sizeof(text), "Presets");
     widget_set_text_utf8(title, text);
     /* The value or name in an edit over the title, after it so a tap reaches the edit, as the
@@ -997,6 +1065,17 @@ static int render(const void *unused) {
             widget_set_focused(ui.edit, 1);
         }
     }
+    /* Search OPRA's query, as the name above, unless a message has the title; the keyboard opens
+     * on it until a search finds something, and from the Search row. */
+    if (ui.screen == OPRA && opra_ready() && !ui.status[0]) {
+        ui.edit = edit_create(ui.page, "text", 2, 26);
+        widget_set_text_utf8(ui.edit, opra_query());
+        widget_set_prop_int(ui.edit, "select_none_when_focused", 1);
+        widget_on(ui.edit, EVT_VALUE_CHANGED, opra_done, 0);
+        widget_on(ui.edit, EVT_IM_ACTION, opra_done, 0);
+        if (typing || !opra_hit(0)) widget_set_focused(ui.edit, 1);
+    }
+    typing = 0;
     widget_invalidate_force(ui.page, 0);
     return 7; /* RET_REMOVE */
 }
@@ -1130,6 +1209,7 @@ static int closed(void *ctx, void *event) {
     free(ui.names);
     ui.names = 0;
     ui.capacity = ui.file_page = 0;
+    opra_close();
     return 0;
 }
 

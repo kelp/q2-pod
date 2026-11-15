@@ -65,7 +65,7 @@ def i32(v):
 
 
 class Card:
-    """/mnt as a dict: fopen and friends, access, unlink and rename, and a folder's files by opendir."""
+    """/mnt as a dict: fopen and friends (fseek too), access, unlink and rename, and a folder's files by opendir."""
     def __init__(self, fw, files=None):
         self.files, self.open, self.dirs, self.fail_writes = dict(files or {}), {}, {}, False
         self.folders = {p.rpartition('/')[0] for p in self.files}
@@ -73,6 +73,7 @@ class Card:
         fw.mock('fw_fread', self.fread)
         fw.mock('fw_fwrite', self.fwrite)
         fw.mock('fw_fclose', self.fclose)
+        fw.mock('fw_fseek', self.fseek)
         fw.mock('fw_rename', lambda old, new, *_: self.files.__setitem__(C.string_at(new).decode(), self.files.pop(C.string_at(old).decode())))
         fw.mock('fw_unlink', lambda path, *_: 0 if self.files.pop(C.string_at(path).decode(), None) is not None else -1)
         fw.mock('fw_access', lambda path, *_: 0 if C.string_at(path).decode() in self.files else -1)
@@ -101,6 +102,10 @@ class Card:
     def fwrite(self, data, size, count, f, *_):
         self.open[f][2] += C.string_at(data, size * count)
         return count
+
+    def fseek(self, f, offset, whence, *_):
+        self.open[f][1] = C.c_long(offset).value + (len(self.files[self.open[f][0]]) if whence == 2 else 0)
+        return 0
 
     def fclose(self, f, *_):
         path, _, written = self.open.pop(f)
@@ -794,21 +799,21 @@ def test_a_kept_screen_keeps_its_selection_and_scroll(fw):
 def test_the_presets_screen_lists_saved_presets_sorted(fw):
     p = page(fw, files={f'{SAVED}/b.peq': b'x', f'{SAVED}/a.peq': b'x', f'{SAVED}/notes.txt': b'x'}).advanced()
     p.click('Presets')
-    assert p.captions() == ['Stock presets', 'Import from SD /EQ', 'Save editor preset', 'Rename a preset', 'Delete a preset',
-                            'a.peq', 'b.peq']
+    assert p.captions() == ['Stock presets', 'Import from SD /EQ', 'Search OPRA', 'Save editor preset', 'Rename a preset',
+                            'Delete a preset', 'a.peq', 'b.peq']
     assert p.title() == 'Presets' and not p.ui.graph and p.ui.bar is None
     rows = dict(p.rows())
-    assert all(p.chevron(rows[t]) for t in p.captions()[:5]) and not p.chevron(rows['a.peq'])
+    assert all(p.chevron(rows[t]) for t in p.captions()[:6]) and not p.chevron(rows['a.peq'])
 
 
 def test_more_than_a_page_of_presets_pages(fw):
     files = {f'{SAVED}/{k:03}.peq': b'x' for k in range(130)}
     p = page(fw, files=files).advanced()
     p.click('Presets')
-    assert p.title() == 'Presets 1/2' and p.captions()[5:7] == ['Next page', '000.peq'] and p.captions()[-1] == '127.peq'
-    assert len(p.rows()) == 5 + 1 + 128
+    assert p.title() == 'Presets 1/2' and p.captions()[6:8] == ['Next page', '000.peq'] and p.captions()[-1] == '127.peq'
+    assert len(p.rows()) == 6 + 1 + 128
     p.click('Next page')
-    assert p.title() == 'Presets 2/2' and p.captions()[5:] == ['Previous page', '128.peq', '129.peq']
+    assert p.title() == 'Presets 2/2' and p.captions()[6:] == ['Previous page', '128.peq', '129.peq']
     p.click('Previous page')
     assert p.title() == 'Presets 1/2'
 
@@ -821,7 +826,7 @@ def test_a_page_the_card_no_longer_fills_is_its_last(fw):
     del p.card.files[f'{SAVED}/128.peq'], p.card.files[f'{SAVED}/129.peq']  # gone from the card meanwhile
     p.props[(p.ui.view, '_ringnav_index')] = 7  # the wheel's row: 129.peq
     p.click('128.peq')
-    assert p.ui.file_page == 0 and p.title() == 'Cannot read preset; settings unchanged' and p.captions()[5] == '000.peq'
+    assert p.ui.file_page == 0 and p.title() == 'Cannot read preset; settings unchanged' and p.captions()[6] == '000.peq'
     assert p.props[(p.ui.view, 'offset')] == 0 and p.props[(p.ui.view, '_ringnav_index')] == 0
 
 
