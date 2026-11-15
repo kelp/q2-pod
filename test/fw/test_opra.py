@@ -3,10 +3,11 @@ taken from it, and its download over Wi-Fi through demo's libcurl, on a card of 
 Card). The EQ page's rows for it are test_peq_page.py's."""
 import ctypes as C
 import json
+import struct
 
 import pytest
 
-from test_peq_page import ACTIVE, EVT_DESTROY, EVT_IM_ACTION, EVT_VALUE_CHANGED, PRESETS, SAVED, Card, Preset, page, state, saved
+from test_peq_page import ACTIVE, EVT_DESTROY, EVT_IM_ACTION, EVT_VALUE_CHANGED, PRESETS, SAVED, Card, Preset, i32, page, state, saved
 from test_radio import Curl
 
 DB, INDEX = '/mnt/mmc/.q2/opra.jsonl', '/mnt/mmc/.q2/opra.idx'
@@ -689,6 +690,24 @@ def test_a_search_lists_the_products_and_a_pick_saves_its_preset_by_name_and_aut
     assert p.ui.screen == OPRA and p.captions() == ['Search', 'Acme One HD 600', 'Update OPRA database']
     p.ret()
     assert p.ui.screen == PRESETS
+
+
+def test_a_preset_s_author_and_details_each_keep_their_own_column(fw):
+    cut, focus = [], []
+    fw.mock('hscroll_label_set_ellipses', lambda w, on, *_: cut.append((w, i32(on))))
+    fw.mock('hscroll_label_set_only_focus', lambda w, on, *_: focus.append((w, i32(on))))
+    records = [*RECORDS[:2], eq('acme::one', 'Rtings/AutoEQ of a long name', 'Target_SoundGuys_Sharp', ONE),
+               *RECORDS[3:]]
+    p = eq_page(fw, with_db(records))
+    p.click('Search OPRA')
+    search(p, 'hd600')
+    p.click('Acme One HD 600')
+    for _, item in p.rows():
+        author, details = p.children(item)[:2]
+        (ax, _, aw, _), (dx, _, dw, _) = (struct.unpack_from('<4i', p.blocks[w], 0) for w in (author, details))
+        assert ax + aw <= dx and dx + dw == 316  # side by side, the details where the other values end
+        assert aw >= 112  # Rtings/AutoEQ, 112 px in the row font on the device, whole
+        assert all((w, 1) in cut and (w, 1) in focus for w in (author, details))  # cut, scrolled when selected
 
 
 def test_no_match_says_so_and_search_opens_the_keyboard_again(fw):
