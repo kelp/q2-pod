@@ -5,7 +5,7 @@ Personal tracking for work on kelp/q2-pod. This file lives on the orphan
 
 ## Features
 
-- [ ] PEQ: Import all presets from `/EQ` in one action (`patch/peq_ui.c`)
+- [x] PEQ: Import all presets from `/EQ` in one action (`patch/peq_ui.c`)
 - [ ] PEQ: headphone picker in Quick Settings, so one output can switch
       between presets for different headphones
 - [ ] PEQ: OPRA search over Wi-Fi
