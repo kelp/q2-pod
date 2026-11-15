@@ -489,6 +489,7 @@ p:has(+ ul), p:has(+ ol), p:has(+ table), p:has(+ pre), .task, h2, h3, .lead { b
       <tr><td>Albums, Songs, Genres</td><td>Your full library, A to Z</td></tr>
       <tr><td>Era</td><td>Each decade, or each year, with dated albums (below)</td></tr>
       <tr><td>Long Songs</td><td>Songs longer than 10 minutes, longest first (below)</td></tr>
+      <tr><td>Listening Stats</td><td>Your time played and your most played artists, albums and songs for this week, month, year and all time (below)</td></tr>
       <tr><td>Playlists, Ratings</td><td>See <a href="#c4">Chapter 4</a></td></tr>
       <tr><td>Recently Added, Recent, Most Played, Hi-Res</td><td>Your newest songs, the songs you played recently, your 100 most played, and hi-res files</td></tr>
       <tr><td>Shuffle</td><td>Shuffles the full library (<a href="#shuffle">Shuffle the library</a>)</td></tr>
@@ -513,6 +514,10 @@ p:has(+ ul), p:has(+ ol), p:has(+ table), p:has(+ pre), .task, h2, h3, .lead { b
   <div class="sub">
   <h3>Long Songs</h3>
   <p><b>Library → Long Songs</b> shows songs longer than 10 minutes, with their length. The first time, it measures songs without a length (“Measuring songs… n/N”). Cancel keeps the lengths. With <b>Scan Song Durations</b> on (<a href="#cfset">Cover Flow settings</a>), it measures the remaining songs in the background.</p>
+  </div>
+  <div class="sub">
+  <h3>Listening Stats</h3>
+  <p><b>Library → Listening Stats</b> counts the songs you played. It has <b>This Week</b> (from Monday), <b>This Month</b>, <b>This Year</b> and <b>All Time</b>, in the time zone of the Q2. Each period shows the time played and the number of plays, then <b>Top Artists</b>, <b>Top Albums</b> and <b>Top Songs</b>: the 25 most played of each. It reads the log of listens that the Q2 keeps on the card for <a href="#scrobble">scrobbling</a>, uploaded or not, thus you do not need an account. The Q2 does not log songs without an artist tag, podcasts, audiobooks, or listens while the clock was not set, so these do not count. Time played adds the full length of each song.</p>
   </div>
   <div class="sub">
   <h3>Folder</h3>

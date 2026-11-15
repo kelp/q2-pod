@@ -7772,20 +7772,22 @@ view=m.node('scroll_view','scroll_view_localmusic',stock); m.top=m.node('window'
 assert m.call(address=HOOKS['localmusic_page_init'][0],args=(m.top,5,0,0),gap=0)==0
 assert m.calls[0][:3]==('stock_localmusic',m.top,5)
 # Library order: Shuffle; Artist, Album, All Songs, Genre, Era, Playlist, Ratings (in My Fav's place, hidden);
-# Recently Added, Recent, Most Played, Frequent (hidden: Most Played is its list), Hi-Res, Long Songs; Apps (hidden: no
-# card app for it), Games, App Store; then Update Library, last (stock rows by get_localmusic_showinfo index).
-kids=m.nodes[view]['children']; row,era,rated,top,long=kids[0],kids[5],kids[7],kids[11],kids[14]
-assert [kids[i] for i in (*range(1,5),6,8,9,10,12,13,18)]==[stock[i] for i in (3,2,1,4,10,6,9,8,7,5,0)] and m.nodes[row]['style']=='s_listitem_black'
+# Recently Added, Recent, Most Played, Frequent (hidden: Most Played is its list), Listening Stats, Hi-Res, Long Songs;
+# Apps (hidden: no card app for it), Games, App Store; then Update Library, last (stock rows by get_localmusic_showinfo index).
+kids=m.nodes[view]['children']; row,era,rated,top,long=kids[0],kids[5],kids[7],kids[11],kids[15]
+assert [kids[i] for i in (*range(1,5),6,8,9,10,12,14,19)]==[stock[i] for i in (3,2,1,4,10,6,9,8,7,5,0)] and m.nodes[row]['style']=='s_listitem_black'
 icon,label,into=m.nodes[m.nodes[era]['children'][0]]['children']
 assert m.nodes[icon]['image']=='local_era' and m.nodes[label]['text']=='Era' and m.nodes[into]['image']=='list_into'
-icon,label,into=m.nodes[m.nodes[kids[16]]['children'][0]]['children']
-assert m.nodes[icon]['image']=='local_games' and m.nodes[label]['text']=='Games' and len(kids)==19
-for k,image,text,fn in ((15,'local_apps','Apps','addon_apps'),(17,'local_store','App Store','shelf_open')):
+icon,label,into=m.nodes[m.nodes[kids[17]]['children'][0]]['children']
+assert m.nodes[icon]['image']=='local_games' and m.nodes[label]['text']=='Games' and len(kids)==20
+for k,image,text,fn in ((16,'local_apps','Apps','addon_apps'),(18,'local_store','App Store','shelf_open')):
     button=m.nodes[kids[k]]['children'][0]; icon,label,into=m.nodes[button]['children']
     assert m.nodes[icon]['image']==image and m.nodes[label]['text']==text and m.handler(button,O['EVT_CLICK'])[0]==payload_syms[fn]
+icon,label,into=m.nodes[m.nodes[kids[13]]['children'][0]]['children']
+assert m.nodes[icon]['image']=='local_stats' and m.nodes[label]['text']=='Listening Stats' and m.nodes[into]['image']=='list_into'
 icon,label,into=m.nodes[m.nodes[long]['children'][0]]['children']
 assert m.nodes[icon]['image']=='local_longsongs' and m.nodes[label]['text']=='Long Songs'
-assert [k for k in kids if not m.nodes[k].get('visible',1)]==[stock[6],stock[7],kids[15]]  # My Fav, Frequent and Apps
+assert [k for k in kids if not m.nodes[k].get('visible',1)]==[stock[6],stock[7],kids[16]]  # My Fav, Frequent and Apps
 icon,label,into=m.nodes[m.nodes[top]['children'][0]]['children']
 assert m.nodes[icon]['image']=='local_frequentplay' and m.nodes[label]['text']=='Most Played'
 icon,label,into=m.nodes[m.nodes[rated]['children'][0]]['children']
