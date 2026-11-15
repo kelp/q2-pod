@@ -78,6 +78,9 @@ Line numbers are from commit facf5b0b; check them again on current main.
       `/etc/scrobble-ca.pem`. NU_CA, RADIO_CA and OM_CA leave out
       `PEQ_ROOT`, so host tests see a different path. Do it after
       `opra-search` merges.
+- [ ] Upstream PR order: whichever of `more-like-this` and `eject-card`
+      lands second must call `similar_stop()` from `card_away()`
+      (`fixups/0001-*.patch`).
 - [ ] guide.html install note: "insert or remove the card only while the
       Q2 is off" is partly out of date with Eject Card.
 - [ ] Eject Card: a "Mount Card" row, if an ejected card that was not
