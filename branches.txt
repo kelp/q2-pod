@@ -7,3 +7,4 @@ test-patch-fpu-fr
 test-seam-timescale
 more-like-this
 listening-stats
+opra-search
