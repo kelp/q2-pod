@@ -207,7 +207,7 @@ def choices(fw, i):
     for k in range(max(n, 0) + 1):
         details = C.c_char_p()
         author = fw.fn('opra_choice', C.c_char_p, C.c_int, C.c_void_p)(k, r(details))
-        out.append(author and (author.decode(), details.value.decode()))
+        out.append(author and (author.decode(), (details.value or b'').decode()))
     assert out.pop() is None
     return n, out
 
@@ -376,6 +376,7 @@ def search(p, text):
 
 def opra_tick(p):
     fn = C.cast(p.fw.lib.opra__tick, C.c_void_p).value
+    assert fn
     timer = [k for k, (f, _) in enumerate(p.timers, 1) if f == fn][-1]
     return C.CFUNCTYPE(C.c_int, C.c_void_p)(fn)(None)
 
