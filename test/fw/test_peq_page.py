@@ -890,6 +890,13 @@ def test_an_import_with_a_bad_line_says_which(fw):
     assert p.title() == 'Line 2: unsupported command' and f'{SAVED}/x.peq' not in p.card.files
 
 
+def test_an_import_list_skips_macos_sidecar_files(fw):
+    p = page(fw, files={f'{IMPORT}/x.txt': b'x', f'{IMPORT}/._x.txt': b'x'}).advanced()
+    p.click('Presets')
+    p.click('Import from SD /EQ')
+    assert p.captions() == ['x.txt']
+
+
 def test_no_imports_says_why(fw):
     p = page(fw).advanced()
     p.click('Presets')
