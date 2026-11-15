@@ -26,9 +26,8 @@ Personal tracking for work on kelp/q2-pod. This file lives on the orphan
 - [ ] Listening stats on the device, from `.scrobbler.log`
 - [ ] "More like this" mix: Last.fm or ListenBrainz similar artists,
       matched against the local library
-- [ ] Scrobbling: `SESSION_KEY=` for Last.fm, so `.scrobble.ini` does not
-      need the password. Session keys do not expire. Add a small script that
-      gets the key on a computer.
+- [x] Scrobbling: `SESSION_KEY=` for Last.fm. Done upstream
+      (`tools/lastfm_key.py`, changelog).
 - [x] Eject Card on the device (branch `eject-card`): stop playback and the card's background
       jobs, then unmount (the USB mode path already does the stops)
 - [ ] Roon, started and controlled from the Q2 (user's requirement, as the
@@ -40,6 +39,21 @@ Personal tracking for work on kelp/q2-pod. This file lives on the orphan
       Earlier note: Roon zone through squeezelite (enable Squeezebox Support in Roon).
       RAAT and Roon Bridge are not possible: closed protocol, no MIPS build.
       First test the existing AirPlay receiver as a Roon AirPlay zone.
+  - [x] Phase 1 works (2026-11-15): q2-roon remote + stock AirPlay zone.
+  - [ ] Firmware: under AirPlay, forward Play/Pause, the side buttons and
+        headset keys to a running card app whose `q2app` has
+        `remote=<op>` (stock drops keys 171/222/223 while
+        `airplayGetFlag()==2`). Branch `airplay-remote`.
+  - [ ] Firmware: card-app Now Playing page (copy of `spot_np`, new file),
+        fed by a state file the app writes; replaces stock's
+        `airplay_page` (cover only, stock volume popup) while the app runs.
+  - [ ] Check on device: does a BT headset Play during AirPlay stop the
+        stream and start the local queue (inferred from disassembly)?
+  - [ ] Phase 2 squeezelite: forum reports say Roon sends software
+        Squeezebox players up to 24/192 (unofficial; test with
+        `-r 384000` and Roon's signal path).
+  - Go memory measured (2026-11-15): RSS 11 MB, heap 3 MB, GC pause
+    3 ms total in 10 min. No rewrite needed.
 
 - [ ] Qobuz client. DEFERRED (2026-11-14, user's choice): revisit only with
       a partner key. Official API is partner-only (api@qobuz.com issues
