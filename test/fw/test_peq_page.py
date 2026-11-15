@@ -1104,7 +1104,7 @@ def test_an_import_list_skips_macos_sidecar_files(fw):
     p = page(fw, files={f'{IMPORT}/x.txt': b'x', f'{IMPORT}/._x.txt': b'x'}).advanced()
     p.click('Presets')
     p.click('Import from SD /EQ')
-    assert p.captions() == ['x.txt']
+    assert p.captions() == ['Import all', 'x.txt']
 
 
 def test_no_imports_says_why(fw):
