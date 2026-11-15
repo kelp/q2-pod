@@ -128,6 +128,7 @@ LIBC = {
     '__isoc99_sscanf': ('int', 'const char *, const char *, ...'),  # peq.c peq_number: no strtod in demo's GOT
     'opendir': ('void *', 'const char *'), 'closedir': ('int', 'void *'),
     'readdir': ('struct dirent *', 'void *'),
+    'readlink': ('int', 'const char *, char *, unsigned'), 'getpid': ('int', 'void'),  # eject.c: what holds the card
     'qsort': ('void', 'void *, unsigned, unsigned, int (*)(const void *, const void *)'),
     # libcstl and socket imports for the Play/Pause queue menu (queue_menu.c)
     '_create_deque': ('void *', 'const char *'), 'deque_init': ('void', 'void *'),
