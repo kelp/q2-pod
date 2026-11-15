@@ -4,6 +4,7 @@
   - AirPlay: with **Headphones Required** on and no headphones connected, music plays to an AirPlay speaker ([#388](https://github.com/DiamondBond/q2-pod/issues/388)). 1.8.6's fix didn't work: the switch still refused the Play that starts the speaker. It now steps aside as soon as you pick a speaker, and comes back when you pick **This Q2**.
   - App Store: games have their own tab. Two tabs head the page, **Apps** and **Games**: tap one, or press Previous or Next. Each app has its developer under its name and its state at the row's end: **INSTALL**, **UPDATE** or **INSTALLED**. The tabs count the apps with an update, and **Check for Updates** says when the last check ran. Buddy, Groovebox, 2048 and Dino Runner are on the Games tab.
   - App Store: the number of apps that can be updated counts an app you installed by hand, whose row says **UPDATE**. It was left out, so the message could say fewer than the rows showed.
+  - System: **Eject Card**, after System Update, makes the card safe to take out without shutting down. It stops playback and everything that writes to the card, then says "Safe to remove the card". A card still in use stays in, and the message names what holds it. Put a card back in and it is ready again by itself.
 - **1.8.7**:
   - Edit Playlist: **Add Songs** opens at once the second time and later in one edit, on a big library. It read and sorted the whole library again each time.
   - Library: **Shuffle Songs**, and **Play Next** or **Add to Queue** while it plays, work faster on a big library.

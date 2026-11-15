@@ -3382,6 +3382,7 @@ static const unsigned char sysset_order[] = {
     0 /* Language, hidden */,
     9 /* App Store */,
     12 /* Update */,
+    15 /* Eject Card */,
     13 /* Reset */,
     5 /* Wheel Function, hidden */,
     6 /* In-Vehicle, hidden */,
@@ -6409,6 +6410,7 @@ int ringnav_systemset(void *win, void *ctx) {
         for (unsigned i = 0; i < 4; ++i)
             widget_set_tr_text(list_row_into(view, moved[i][0], to_page, (void *)moved[i][1]),
                                moved[i][0]);
+        eject_row(view);
         for (unsigned i = 5; i <= 8; ++i) widget_set_visible(widget_get_child(view, i), 0, 0);
         /* Language: Q2 Pod's pages and labels are English only, so stock's other languages read
          * half-blank; hidden until they are translated (docs/internals.md, English). */
@@ -8066,15 +8068,9 @@ int ringnav_folder_click(void *ctx, void *event) {
 }
 
 /* usbmode_page_init, as a cable to a computer opens USB mode, before stock unmounts the card for
- * USB storage: the card apps, which write to it (downloads, uploads), end first, so nothing of
- * theirs keeps it busy (they run from /tmp: addon.c), as do Tidal's downloads (tidal.c), Download
- * Album Lyrics' job, playlist art's worker and the song durations' (durations.c). */
+ * USB storage: the jobs that write to it end first (eject.c card_away), so none keeps it busy. */
 int ringnav_usbmode(void *a, void *b, void *c, void *d) {
-    tidal_card_away();
-    addon_card_away();
-    album_lyrics_stop();
-    playlist_art_stop();
-    durations_shutdown(0);
+    card_away();
     return stock_usbmode_trampoline(a, b, c, d);
 }
 

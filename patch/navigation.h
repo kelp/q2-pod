@@ -563,6 +563,10 @@ void battery_paint(void *w, void *canvas);
 /* system.c */
 void power_poll(void);
 
+/* eject.c */
+void card_away(void);       /* the card's jobs stopped: USB Storage and Eject Card */
+void eject_row(void *view); /* System's Eject Card */
+
 /* usb_charge.c: wrappers for charging, configuration loading and USB gadget dispatch. */
 int ringnav_usb_charge(int on), usb_charge_held(void), usb_charge_wanted(void);
 void usb_charge_row(void *win, void *view);    /* Power's USB DAC Charging */
