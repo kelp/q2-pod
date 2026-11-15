@@ -20,7 +20,7 @@ EVENT_KEY, EVENT_X, EVENT_Y, W_PARENT, IM_WIDGET, IM_KEYBOARD = (
 RET_REMOVE, RET_REPEAT = 7, 8
 ACTIVE, SAVED, IMPORT, OUTPUTS = '/mnt/data/peq-active', '/mnt/data/peq-presets', '/mnt/mmc/EQ', '/mnt/data/peq-outputs'
 EQ_OFF, EQ_3, EQ_PEQ = range(3)
-HOME, BAND, PRESETS, IMPORTS, SAVES, CONFIRM, DELETES, PICK, ADJUST, STOCKS, RENAMES, NAMING = range(12)
+HOME, BAND, PRESETS, IMPORTS, SAVES, CONFIRM, DELETES, PICK, ADJUST, STOCKS, RENAMES, NAMING, HEADPHONES = range(13)
 SIMPLE, ADVANCED = range(2)
 E3_TABS, E3_SWITCH, E3_PRESETS, E3_RESET, E3_LOW, E3_MID, E3_HIGH = range(7)
 GRAPH_X, GRAPH_W, PLOT_TOP, PLOT_BOTTOM, GRAPH_DB = 16, 343, 6, 78, 15
@@ -888,6 +888,72 @@ def test_an_import_with_a_bad_line_says_which(fw):
     assert p.captions() == ['x.txt'] and p.title() == 'Presets'
     p.click('x.txt')
     assert p.title() == 'Line 2: unsupported command' and f'{SAVED}/x.peq' not in p.card.files
+
+
+# Headphones: Quick Settings' Playback hold (peq_headphones) opens the page on the saved presets.
+
+def headphones(fw, s=None, files=None):
+    p = page(fw, s, files)
+    fw.fn('peq_headphones', None)()
+    assert [C.string_at(c[1][0]) for c in fw.calls('navigator_to')] == [b'playset/equalizer_page']
+    return p.open()
+
+
+def hd600(fw):
+    return peak(fw, -2.5, 120.0)
+
+
+def test_headphones_lists_the_saved_presets_and_marks_what_plays(fw):
+    playing = hd600(fw)
+    playing.automatic, playing.preamp = 1, -1.0  # Auto's cut, which the saved copy needn't share
+    files = {f'{SAVED}/HD600.peq': b'Q2PEQ02\0' + bytes(hd600(fw)), f'{SAVED}/Porta Pro.peq': b'Q2PEQ02\0' + bytes(peak(fw, 4))}
+    p = headphones(fw, state(fw, EQ_PEQ, peq=playing), files)
+    assert p.ui.screen == HEADPHONES and p.title() == 'Headphones'
+    assert p.captions() == ['EQ settings', 'EQ Off', 'HD600 Playing', 'Porta Pro']
+
+
+def test_headphones_marks_eq_off_when_nothing_plays(fw):
+    files = {f'{SAVED}/HD600.peq': b'Q2PEQ02\0' + bytes(hd600(fw))}
+    p = headphones(fw, state(fw, EQ_OFF, peq=hd600(fw)), files)
+    assert p.captions() == ['EQ settings', 'EQ Off Playing', 'HD600']
+
+
+def test_picking_a_headphone_plays_its_preset_and_closes(fw):
+    files = {f'{SAVED}/HD600.peq': b'Q2PEQ02\0' + bytes(hd600(fw))}
+    p = headphones(fw, state(fw, EQ_OFF), files)
+    p.click('HD600')
+    s = p.card.state()
+    assert s.mode == EQ_PEQ and not s.peq.bypass and s.peq.bands[0].gain == -2.5 and s.peq.bands[0].frequency == 120.0
+    assert ('PLAYSET', 'EQFLAG', 1) in p.config and fw.calls('navigator_back')
+
+
+def test_eq_off_stops_the_eq_and_closes(fw):
+    p = headphones(fw, state(fw, EQ_PEQ, peq=hd600(fw)))
+    p.click('EQ Off')
+    assert p.card.state().mode == EQ_OFF and ('PLAYSET', 'EQFLAG', 0) in p.config and fw.calls('navigator_back')
+
+
+def test_a_headphone_that_cant_be_read_says_so_and_stays(fw):
+    p = headphones(fw, files={f'{SAVED}/Broken.peq': b'x'})
+    before = p.card.files[ACTIVE]
+    p.click('Broken')
+    assert p.title() == 'Cannot read preset; settings unchanged' and p.ui.screen == HEADPHONES
+    assert p.card.files[ACTIVE] == before and not fw.calls('navigator_back')
+
+
+def test_eq_settings_goes_on_to_the_tab_the_page_was_on(fw):
+    p = headphones(fw)  # Simple, as at boot
+    p.click('EQ settings')
+    assert p.ui.tab == SIMPLE and p.e3.view and not fw.calls('navigator_back')
+
+
+def test_return_from_headphones_closes_the_page_and_the_next_open_is_the_eq_page(fw):
+    p = headphones(fw)
+    p.ret()
+    assert fw.calls('navigator_back')
+    p.handler(p.page, EVT_DESTROY)()
+    p.open()
+    assert p.ui.screen == HOME and p.ui.tab == SIMPLE
 
 
 def test_no_imports_says_why(fw):

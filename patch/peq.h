@@ -410,6 +410,7 @@ int pod_value(int i);
  * ("3.5mm", "4.4mm", "usb", a Bluetooth MAC) takes over; forgetting whose it is ends the following.
  */
 void eq_output(const char *key), eq_output_forget(void);
+void peq_headphones(void); /* Quick Settings' Playback hold: the EQ page on the saved presets */
 void ringnav_eq_output_toggle(void); /* and its row's click */
 void peq_boot(void); /* clear a previous session's Simple EQ comparison before restoring playback */
 extern int peq_chained; /* peq_ui.c: peq_stock_eq ran this boot */
