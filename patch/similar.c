@@ -242,7 +242,14 @@ static void sim_play(void) {
         void *mix = _create_deque("stSongInfo");
         deque_init(mix);
         for (unsigned i = 0; i < got; ++i) _deque_push_back(mix, deque_at(all, pick[i]));
+        /* Over the Now Playing it was asked from, the mix's own Now Playing replaces it, closed
+         * once the new one is up and unanimated: left under it, the old page held the last
+         * queue's place and time, and Return went back to it before the page under both. */
+        void *wm = window_manager(), *was = window_manager_get_top_window(wm);
+        int np = was && !tk_strcmp(widget_get_prop_str(was, "name", ""), "playing_page");
         shuffle_play(mix);
+        if (np && window_manager_get_top_window(wm) != was)
+            window_manager_close_window_force(wm, was);
         deque_destroy(mix);
         snprintf(note, sizeof note, tr("Playing %u songs by %u artists"), got, by);
     }
