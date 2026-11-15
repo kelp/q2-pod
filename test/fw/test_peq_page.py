@@ -1087,6 +1087,18 @@ def test_a_headphone_that_cant_be_read_says_so_and_stays(fw):
     assert p.card.files[ACTIVE] == before and not fw.calls('navigator_back')
 
 
+def test_a_headphones_page_the_card_no_longer_fills_is_its_last(fw):
+    files = {f'{SAVED}/{k:03}.peq': b'x' for k in range(130)}
+    p = headphones(fw, files=files)
+    p.click('Next page')
+    assert p.captions() == ['EQ settings', 'EQ Off', 'Previous page', '128', '129']
+    del p.card.files[f'{SAVED}/128.peq'], p.card.files[f'{SAVED}/129.peq']  # gone from the card meanwhile
+    p.props[(p.ui.view, '_ringnav_index')] = 4  # the wheel's row: 129
+    p.click('128')
+    assert p.ui.file_page == 0 and p.title() == 'Cannot read preset; settings unchanged' and p.captions()[2] == '000'
+    assert p.props[(p.ui.view, 'offset')] == 0 and p.props[(p.ui.view, '_ringnav_index')] == 0
+
+
 def test_eq_settings_goes_on_to_the_tab_the_page_was_on(fw):
     p = headphones(fw)  # Simple, as at boot
     p.click('EQ settings')
