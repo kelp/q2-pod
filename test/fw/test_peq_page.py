@@ -318,8 +318,9 @@ class Page:
 
     # the rows
     def labels(self, item):
+        """The row's texts left to right, as on screen."""
         out = []
-        for c in self.children(item):
+        for c in sorted(self.children(item), key=lambda c: struct.unpack_from('<i', self.blocks[c])[0]):
             if self.images.get(c) in ('switch_on', 'switch_off'):
                 out.append('On' if self.images[c] == 'switch_on' else 'Off')
             elif self.text.get(c):

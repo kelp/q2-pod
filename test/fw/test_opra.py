@@ -693,21 +693,28 @@ def test_a_search_lists_the_products_and_a_pick_saves_its_preset_by_name_and_aut
 
 
 def test_a_preset_s_author_and_details_each_keep_their_own_column(fw):
-    cut, focus = [], []
+    cut, focus, kinds = [], [], {}
     fw.mock('hscroll_label_set_ellipses', lambda w, on, *_: cut.append((w, i32(on))))
     fw.mock('hscroll_label_set_only_focus', lambda w, on, *_: focus.append((w, i32(on))))
     records = [*RECORDS[:2], eq('acme::one', 'Rtings/AutoEQ of a long name', 'Target_SoundGuys_Sharp', ONE),
                *RECORDS[3:]]
     p = eq_page(fw, with_db(records))
+    fw.mock('hscroll_label_create', lambda parent, x, y, w, h, *_: p.new(parent, x, y, w, h, 'hscroll_label'))
+    for kind in ('hscroll_label', 'label', 'image', ''):
+        kinds[kind] = C.create_string_buffer(kind.encode())
+    fw.mock('widget_get_type', lambda w, *_: C.addressof(kinds.get(p.kind.get(w, ''), kinds[''])))
+    fw.mock('widget_get_visible', lambda w, *_: 1)
+    scroller = fw.fn('navigation__row_scroller', C.c_void_p, C.c_void_p, C.c_int)
     p.click('Search OPRA')
     search(p, 'hd600')
     p.click('Acme One HD 600')
     for _, item in p.rows():
-        author, details = p.children(item)[:2]
+        author, details = sorted((c for c in p.children(item) if p.text.get(c)), key=lambda c: struct.unpack_from('<i', p.blocks[c])[0])
         (ax, _, aw, _), (dx, _, dw, _) = (struct.unpack_from('<4i', p.blocks[w], 0) for w in (author, details))
         assert ax + aw <= dx and dx + dw == 316  # side by side, the details where the other values end
         assert aw >= 112  # Rtings/AutoEQ, 112 px in the row font on the device, whole
-        assert all((w, 1) in cut and (w, 1) in focus for w in (author, details))  # cut, scrolled when selected
+        assert all((w, 1) in cut and (w, 1) in focus for w in (author, details))  # cut, never scrolled by focus
+        assert scroller(item, 2) == details  # the selected row's marquee (navigation.c) scrolls the details
 
 
 def test_no_match_says_so_and_search_opens_the_keyboard_again(fw):
