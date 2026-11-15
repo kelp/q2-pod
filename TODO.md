@@ -72,6 +72,11 @@ Line numbers are from commit facf5b0b; check them again on current main.
 
 ## Cleanups (follow-ups from feature branches)
 
+- [ ] Branch coverage on new C at least upstream's (87.1% branches, 98.3%
+      lines, CI gcovr 2026-11-15). Below it: opra.c 78.6% br / 97.6% ln,
+      listening_stats.c 80.0% / 96.4%, eject.c 81.5%, similar.c 85.1%;
+      peq_ui.c lines added by headphone-picker 70% br, opra-search 76% br.
+
 - [ ] One CA bundle define in a header. `scrobble.c` (CA_FILE),
       `netupdate.c` (NU_CA), `radio.c` (RADIO_CA), `onlinematch.c` (OM_CA)
       and `opra.c` (OPRA_CA) each define the path to
