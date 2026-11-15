@@ -6,3 +6,4 @@ eq-import-skip-appledouble
 test-patch-fpu-fr
 test-seam-timescale
 more-like-this
+listening-stats
