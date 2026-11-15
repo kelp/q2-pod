@@ -35,6 +35,13 @@ Personal tracking for work on kelp/q2-pod. This file lives on the orphan
       RAAT and Roon Bridge are not possible: closed protocol, no MIPS build.
       First test the existing AirPlay receiver as a Roon AirPlay zone.
 
+- [ ] Qobuz client. Official API is partner-only (api@qobuz.com issues
+      app_id/app_secret). Community clients reuse IDs scraped from the web
+      player, which risks Qobuz's terms and may break. Qobuz Connect is
+      closed (licensed SDK); unofficial receivers exist (qobine, qconnect).
+      Model: the Deezer card app (browse, download to the card). Now: AirPlay
+      from the Qobuz phone app (16-bit/44.1 kHz).
+
 ## Bugs from the audit (2026-11-14)
 
 Line numbers are from commit facf5b0b; check them again on current main.
