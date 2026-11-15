@@ -101,7 +101,8 @@ void media_set_playing(int playing) {
         radio_set_playing(playing);
     else if (owner == 2)
         spot_set_playing(playing);
-    else if (media_playing() != playing && !addon_remote_on()) /* AirPlay's app: not stopped */
+    else if (!addon_remote_send(playing ? "play" : "pause") && /* AirPlay's, a card app's */
+             media_playing() != playing)
         player_play_pause();
     hs.automatic = 0;
 }
@@ -115,6 +116,9 @@ static int focus(void) {
                                                                                    : 0;
 }
 int media_focused(void) { return focus() != 0; }
+/* media_playing, or AirPlay's card app taking the keys (addon_remote.c), whose own player's state
+ * isn't known here: the firmware's pauses (an AirPod out, the link, a Pause key) reach it. */
+static int playing(void) { return media_playing() || addon_remote_on(); }
 void media_key(unsigned key) {
     headset_manual();
     if (addon_game_audio()) { /* a card game with the sound: stock's player must not retake it;
@@ -129,7 +133,7 @@ void media_key(unsigned key) {
     else if (f != 3 && spot_status())
         spot_media(key);
     else if (addon_remote_key(key)) /* AirPlay's, a card app's (addon_remote.c) */
-        ;
+        return;
     else if (key == KEY_PLAY)
         player_play_pause();
     else if (check_forbid_play_no_headset(0)) /* Require Output: as stock's skip keys */
@@ -327,15 +331,15 @@ void headset_ears(unsigned report) {
     if (report & 4) {
         int ears = report & 3, in = (ears & 1) + (ears >> 1), was = (hs.ears & 1) + (hs.ears >> 1);
         if (hs.known && in < was &&
-            (media_playing() || (hs.recent_owner == (unsigned)owner &&
-                                 hs.recent_session == session && now - hs.recent_at < 1500))) {
+            (playing() || (hs.recent_owner == (unsigned)owner && hs.recent_session == session &&
+                           now - hs.recent_at < 1500))) {
             if (!hs.paused) hs.want = was;
             hs.owner = owner;
             hs.session = session;
             hs.paused = 1;
             hs.paused_epoch = hs.epoch;
             hs.paused_at = now;
-            if (media_playing()) media_set_playing(0);
+            if (playing()) media_set_playing(0);
         } else if (hs.known && hs.paused && in >= hs.want) {
             media_set_playing(1);
             hs.paused = 0;
@@ -370,8 +374,7 @@ void headset_command(int code) {
     } else if (code == 119 || code == 201 || code == 166) {
         if (hs.paused && now - hs.paused_at < 1500) return;
         headset_manual();
-        if (addon_remote_key(KEY_PLAY)) return; /* the app's op toggles: no pause of its own */
-        if (media_playing()) {
+        if (playing()) {
             hs.recent_at = now;
             hs.recent_owner = media_owner();
             hs.recent_session = media_session();
@@ -380,7 +383,7 @@ void headset_command(int code) {
     } else if (code == 200 || code == 207) {
         if (hs.paused || connect_hold(now)) return; /* insertion is governed by the ear count */
         headset_manual();
-        if ((!hs.known || hs.ears) && !addon_remote_key(KEY_PLAY)) media_set_playing(1);
+        if (!hs.known || hs.ears) media_set_playing(1);
     }
 }
 /* EQ per Output's name for what plays (stock's config_bal_output and config_po_output: the jack
@@ -415,7 +418,7 @@ void headset_poll(void) {
         hs.known = hs.paused = hs.recent_owner = 0;
         hs.linked = on;
         hs.linked_at = now;
-        if (!on && media_playing()) media_set_playing(0);
+        if (!on && playing()) media_set_playing(0);
     }
     if (!on) return;
     if (!hs.running) headset_start();

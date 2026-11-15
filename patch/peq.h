@@ -587,7 +587,7 @@ int ringnav_smart_awake(void); /* navigation.c: Smart Awake (IPOD KEEPLIT) is on
 void library_poll(void); /* addon_library.c: an app's library update request, once per addon_poll */
 void addon_eq_poll(int slot, const char *id); /* addon_eq.c: app id's EQ request, in its poll */
 /* addon_remote.c: AirPlay's keys sent to a card app that asks for them (remote=<op>) */
-int addon_remote_on(void), addon_remote_key(unsigned key);
+int addon_remote_on(void), addon_remote_key(unsigned key), addon_remote_send(const char *word);
 void addon_remote_poll(void);
 /* spotify.c's Q2SPOT/1 framing (docs/librespot.md), which the card apps speak too */
 int spot_escape(const char *s, char *out, unsigned size);

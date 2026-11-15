@@ -4,12 +4,15 @@
  * player_play_pause, which stops AirPlay and starts the local queue. A card app that runs (its
  * loop's pid file /tmp/q2-<id> is there) and whose q2app holds remote=<op> takes them instead,
  * when no other source of Q2 Pod's has them (media_owner 1, no card game with the sound): each is
- * "<op> playpause", "<op> next" or "<op> previous", a request on the app's browse socket, which a
- * worker of its own sends, so the key never waits. Its reply is not waited for: a refusal's message
- * is toasted later, on the UI loop (addon_remote_poll). q2-roon controls a Roon core this way while
- * the core plays to the Q2 over AirPlay: shairport 1.1.1 has no DACP to send the keys back.
- * ponytail: the q2app files are read from the card at every key, as addon_fav_path's are: a key is
- * rare. With two such apps running, the first the card lists takes the keys. */
+ * "<op> <verb>", a request on the app's browse socket, which a worker of its own sends, so the key
+ * never waits. The verbs: playpause (the Q2's Play/Pause, a headset's Play/Pause), next, previous,
+ * play (a headset's Play, an AirPod back in) and pause (a headset's Pause or Stop, an AirPod out,
+ * the link dropping, a sleep timer: media_set_playing). Its reply is not waited for: a refusal's
+ * message is toasted later, on the UI loop (addon_remote_poll). q2-roon controls a Roon core this
+ * way while the core plays to the Q2 over AirPlay: shairport 1.1.1 has no DACP to send the keys
+ * back. The app found is kept for REMOTE_LOOK_MS (headset_ears asks every 100 ms with both buds
+ * out), so an app that starts or quits is seen up to that late. With two such apps running, the
+ * first the card lists takes the keys. */
 #include "offsets.inc"
 #include "peq.h"
 #include "stock.h"
@@ -21,6 +24,7 @@
 #define REMOTE_REPLY 512    /* a reply as far as it is read: its first lines */
 #define REMOTE_JOBS 4       /* workers at once; a key past them is dropped */
 #define REMOTE_MSG 64
+#define REMOTE_LOOK_MS 1000 /* the card's apps looked at again this often */
 
 typedef struct {
     char path[48], req[64];
@@ -30,6 +34,9 @@ static struct {
     unsigned id;
     volatile int jobs, lock, said; /* said: msg holds a toast for addon_remote_poll */
     char msg[REMOTE_MSG];
+    int looked, found; /* the last look at the card (remote_app), at time_now_ms at */
+    unsigned at;
+    char app[REMOTE_ID], op[REMOTE_OP];
 } rm __attribute__((section(".scratch")));
 
 /* spotify.c's spot_exchange to the app's socket, within REMOTE_WAIT_MS; a refusal with a message
@@ -59,7 +66,7 @@ static void *worker(void *arg) {
 
 /* The first running app whose q2app holds remote=<op>, an op of 1 to REMOTE_OP - 1 bytes with no
  * space, tab or %: its id in id (REMOTE_ID bytes), its op in op; 0 for none. */
-static int remote_app(char *id, char *op) {
+static int remote_find(char *id, char *op) {
     char raw[512], path[64], v[48];
     int found = 0;
     void *d = opendir(CARD);
@@ -88,32 +95,31 @@ static int remote_app(char *id, char *op) {
     return found;
 }
 
-/* Whether the keys are an app's now: AirPlay plays, no other source has them, and an app asks. */
-static int remote_on(char *id, char *op) {
-    return airplayGetFlag() == 2 && media_owner() == 1 && !addon_game_audio() && remote_app(id, op);
-}
-int addon_remote_on(void) {
-    char id[REMOTE_ID], op[REMOTE_OP];
-    return remote_on(id, op);
+/* remote_find's answer, looked for again once REMOTE_LOOK_MS old; in rm.app and rm.op. */
+static int remote_app(void) {
+    unsigned now = time_now_ms();
+    if (!rm.looked || now - rm.at >= REMOTE_LOOK_MS)
+        rm.looked = 1, rm.at = now, rm.found = remote_find(rm.app, rm.op);
+    return rm.found;
 }
 
-/* key (KEY_PLAY, KEY_FWD_BTN or KEY_BACK_BTN) sent to the app that takes the keys now; 1 when it
- * took it (its worker started), 0 when the key is the caller's as before. */
-int addon_remote_key(unsigned key) {
-    const char *word = key == KEY_PLAY       ? "playpause"
-                       : key == KEY_FWD_BTN  ? "next"
-                       : key == KEY_BACK_BTN ? "previous"
-                                             : 0;
-    char id[REMOTE_ID], op[REMOTE_OP];
+/* Whether the keys are an app's now: AirPlay plays, no other source has them, and an app asks. */
+int addon_remote_on(void) {
+    return airplayGetFlag() == 2 && media_owner() == 1 && !addon_game_audio() && remote_app();
+}
+
+/* word (playpause, play, pause, next or previous) sent to the app that takes the keys now; 1 when
+ * it took it (its worker started), 0 when the key is the caller's as before. */
+int addon_remote_send(const char *word) {
     job_t *j;
     unsigned long thread;
-    if (!word || !remote_on(id, op)) return 0;
+    if (!addon_remote_on()) return 0;
     if (__sync_fetch_and_add(&rm.jobs, 1) >= REMOTE_JOBS || !(j = calloc(1, sizeof *j))) {
         __sync_fetch_and_sub(&rm.jobs, 1);
         return 1; /* the app's still: dropped, never stock's */
     }
-    tk_snprintf(j->path, sizeof j->path, "/tmp/q2-%s.browse.sock", id);
-    tk_snprintf(j->req, sizeof j->req, "Q2SPOT/1\n%u\t%s\t%s\n", ++rm.id, op, word);
+    tk_snprintf(j->path, sizeof j->path, "/tmp/q2-%s.browse.sock", rm.app);
+    tk_snprintf(j->req, sizeof j->req, "Q2SPOT/1\n%u\t%s\t%s\n", ++rm.id, rm.op, word);
     if (pthread_create(&thread, 0, worker, j)) {
         free(j);
         __sync_fetch_and_sub(&rm.jobs, 1);
@@ -121,6 +127,15 @@ int addon_remote_key(unsigned key) {
     }
     pthread_detach(thread);
     return 1;
+}
+
+/* key (KEY_PLAY, KEY_FWD_BTN or KEY_BACK_BTN) as addon_remote_send's verb; 0 for any other key. */
+int addon_remote_key(unsigned key) {
+    const char *word = key == KEY_PLAY       ? "playpause"
+                       : key == KEY_FWD_BTN  ? "next"
+                       : key == KEY_BACK_BTN ? "previous"
+                                             : 0;
+    return word && addon_remote_send(word);
 }
 
 /* addon_poll's: a refusal's message, toasted on the UI loop. */
