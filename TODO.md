@@ -31,11 +31,15 @@ Personal tracking for work on kelp/q2-pod. This file lives on the orphan
       gets the key on a computer.
 - [ ] Eject Card on the device: stop playback and the card's background
       jobs, then unmount (the USB mode path already does the stops)
-- [ ] Roon zone through squeezelite (enable Squeezebox Support in Roon).
+- [ ] Roon, started and controlled from the Q2 (user's requirement, as the
+      FiiO M21 does): Roon Extension API for browse/transport plus a local
+      zone (squeezelite or AirPlay), in one app. Design research running.
+      Earlier note: Roon zone through squeezelite (enable Squeezebox Support in Roon).
       RAAT and Roon Bridge are not possible: closed protocol, no MIPS build.
       First test the existing AirPlay receiver as a Roon AirPlay zone.
 
-- [ ] Qobuz client. Official API is partner-only (api@qobuz.com issues
+- [ ] Qobuz client. DEFERRED (2026-11-14, user's choice): revisit only with
+      a partner key. Official API is partner-only (api@qobuz.com issues
       app_id/app_secret). Community clients reuse IDs scraped from the web
       player, which risks Qobuz's terms and may break. Qobuz Connect is
       closed (licensed SDK); unofficial receivers exist (qobine, qconnect).
