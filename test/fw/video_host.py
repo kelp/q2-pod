@@ -18,8 +18,8 @@ There is no second process. When fork's stub answers a pid, the harness first ru
 here: ffmpeg() again with ffmpeg()'s own arguments, read off its frame at the offsets its debug info
 gives (-O0 keeps each parameter there), its fork answering 0, so the child's moves and its execv reach
 the stubs; its _exit comes back to the parent's fork, which then answers the pid. A fork the stub
-answers 0 makes the caller itself the child, as ever. Finding that frame takes x86-64's layout (its
-CFA two words above the frame pointer), so the harness refuses to compile for anything else."""
+answers 0 makes the caller itself the child, as ever. libgcc's unwinder finds that frame's CFA from
+its call frame information, so the harness takes no one machine's frame layout."""
 import json
 import re
 import subprocess
@@ -33,11 +33,9 @@ HARNESS = {'_exit': 'fw_video_exit', 'poll': 'fw_video_poll', 'usleep': 'fw_vide
 # video.c's ffmpeg(), whose child's half the harness runs: its parameters and their types, in order.
 CHILD = ('ffmpeg', [('args', 'const char **'), ('a', 'int'), ('at_a', 'int'), ('b', 'int'), ('at_b', 'int')])
 HARNESS_SOURCE = r'''
-#ifndef __x86_64__
-#error "fw_video_fork finds ffmpeg() arguments by x86-64 frame layout (CFA = frame pointer + 16): port it first"
-#endif
 #include <setjmp.h>
 #include <stdlib.h>
+#include <unwind.h>
 int video_main(int, char **);
 void *video__writer(void *);
 int video__ffmpeg(const char **, int, int, int, int);
@@ -55,11 +53,24 @@ void fw_video_exit(int s) {
     if (!running) abort(); /* no run to end: a test reached an exit outside fw_video_run */
     end(s);
 }
+/* The unwinder gives each frame's IP with the CFA of the frame it called: ffmpeg()'s CFA comes with its caller's IP. */
+static _Unwind_Reason_Code ffmpeg_cfa(struct _Unwind_Context *frame, void *cfa) {
+    static int in_ffmpeg;
+    if (in_ffmpeg) {
+        in_ffmpeg = 0;
+        *(char **)cfa = (char *)_Unwind_GetCFA(frame);
+        return _URC_END_OF_STACK;
+    }
+    in_ffmpeg = _Unwind_FindEnclosingFunction((void *)_Unwind_GetIP(frame)) == (void *)video__ffmpeg;
+    return _URC_NO_REASON;
+}
 int fw_video_fork(void) {
     if (child) return 0;
     int pid = (int)fw_fork(0, 0, 0, 0, 0, 0);
     if (pid > 0) {
-        char *cfa = (char *)__builtin_frame_address(1) + 2 * sizeof(void *); /* ffmpeg()'s */
+        char *cfa = 0; /* ffmpeg()'s, the frame that called fork */
+        _Unwind_Backtrace(ffmpeg_cfa, &cfa);
+        if (!cfa) abort();
         child = 1;
         if (!setjmp(child_done)) video__ffmpeg(CHILD_ARGS);
         child = 0;
@@ -140,9 +151,7 @@ def build(out, extra=()):
     subprocess.run(['objcopy', *renames, '--redefine-sym', 'main=video_main', str(obj)], check=True)
     stubs = [f'fw_{name}' for name in calls]
     (out/'fw_stubs.c').write_text(host.stubs_source(stubs, {}) + HARNESS_SOURCE.replace('CHILD_ARGS', child))
-    # A frame pointer, so fw_video_fork finds its caller's frame.
-    subprocess.run(['cc', '-O1', '-fPIC', '-fno-omit-frame-pointer', '-w', '-c', str(out/'fw_stubs.c'), '-o', str(out/'fw_stubs.o')],
-                   check=True)
+    subprocess.run(['cc', '-O1', '-fPIC', '-w', '-c', str(out/'fw_stubs.c'), '-o', str(out/'fw_stubs.o')], check=True)
     library = out/'q2video.so'
     # -Bsymbolic: video.c's own names (scale, swap, mono) bind to themselves, never to a namesake loaded first.
     subprocess.run(['cc', '-shared', '-Wl,-Bsymbolic', *extra, str(obj), str(out/'fw_stubs.o'), '-o', str(library)], check=True)
