@@ -9,7 +9,7 @@ import struct
 import pytest
 
 import host
-from conftest import NAVIGATION_SOURCE, O, Deques, Files, claim, high_halves
+from conftest import NAVIGATION_SOURCE, O, Deques, Files, claim, high_halves, low_map
 from test_coverflow import SONGTABLE  # stock's songtable, as demo's CREATE TABLE text has it
 
 W_PARENT, EVT_CLICK, EVENT_TYPE, EVENT_KEY, EVENT_X = O['W_PARENT'], O['EVT_CLICK'], O['EVENT_TYPE'], O['EVENT_KEY'], O['EVENT_X']
@@ -2140,7 +2140,8 @@ class Records:
 
     def __init__(self):
         self.maps, self.used, self.high = [], 0, iter(self.HIGHS)
-        self.low = self.map(0, 1 << 20, 0x40)  # MAP_32BIT
+        self.low = low_map(1 << 20)
+        self.maps.append((self.low, 1 << 20))
 
     def map(self, at, size, flags):
         p = libc.mmap(at, size, 3, 0x22 | flags, -1, 0)

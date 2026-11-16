@@ -2,16 +2,14 @@
 Play/Pause hold's move, and a queue changed under the page."""
 import ctypes as C
 import itertools
-import mmap
 import struct
 
 import pytest
 
-from conftest import O, Deques, libc
+from conftest import O, Deques, libc, low_map
 
 PAGE = 0x7000
 EVT_CLICK, EVT_DESTROY, SEL, COUNT = O['EVT_CLICK'], O['EVT_DESTROY'], b'_ringnav_index', b'_ringnav_count'
-MAP_32BIT = 0x40
 NAMES = [b'%02d Song.flac' % k for k in range(8)]
 
 
@@ -20,8 +18,7 @@ class Low:
     here reads 8, so a field reads whole only with an empty cell after it. A record keeps its file name (REC_NAME;
     REC_PATH's cell after it stays empty, so track_name shows the name, as for an untagged file) and its artist."""
     def __init__(self, size=1 << 16):
-        self.base = libc.mmap(None, size, 3, mmap.MAP_PRIVATE | mmap.MAP_ANONYMOUS | MAP_32BIT, -1, 0)
-        assert self.base and self.base + size < 1 << 32
+        self.base = low_map(size)
         self.at, self.size = self.base, size
 
     def take(self, data):

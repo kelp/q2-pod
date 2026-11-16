@@ -65,8 +65,9 @@ if libc.mmap(0x400000, 0x800000, 3, 0x100022, -1, 0) != 0x400000:  # read/write,
 # Strings at chosen addresses: stock's records hold 4-byte pointers a word apart and P() reads 8 here, so a test puts
 # a field's string where its word is the low half and the next field's the high one, in a page mapped for it. Each
 # file takes its high halves from high_halves, which hands none out twice: no two files' pages meet, in any order.
-# From 0x1001: past AddressSanitizer's shadow (to 0x10007fff7fff), short of its heap (0x500000000000).
-_high = 0x1001
+# From 0x2010: past AddressSanitizer's shadow (to 0x10007fff7fff on x86-64, 0x200fffffffff on arm64), short of its
+# heap (0x500000000000).
+_high = 0x2010
 
 
 def high_halves(n):
@@ -125,6 +126,15 @@ def claim(address):
     page = address & ~0xfff
     if libc.mmap(page, 0x2000, 7, 0x100022, -1, 0) != page:  # MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED_NOREPLACE
         assert not libc.mprotect(page, 0x2000, 7)
+
+def low_map(size, prot=3):
+    """size bytes of zeroed pages from 1 GB to 2 GB, where x86-64's MAP_32BIT maps them, on any machine: stock's
+    pointers are 32 bits. The first place free, probed a 64 KB step at a time."""
+    for at in range(0x40000000, 0x80000000 - size, 0x10000):
+        if libc.mmap(at, size, prot, 0x100022, -1, 0) == at:  # MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED_NOREPLACE
+            return at
+    raise MemoryError(f'no {size:#x} bytes free under 2 GB')
+
 
 def ask_cover(fw):
     """A card app's song asks for its cover, as get_onlineid3info does (build.py COVERINFO_CALL, tidal.c
