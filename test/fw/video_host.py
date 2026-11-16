@@ -127,7 +127,8 @@ def build(out, extra=()):
     undefined = {r[-1] for r in rows if len(r) == 2 and r[0] == 'U'}
     local = [r[-1] for r in rows if len(r) == 3 and r[1] in 'tdbr' and re.fullmatch(r'[A-Za-z_]\w*', r[-1])]
     system = {'__stack_chk_fail', '_GLOBAL_OFFSET_TABLE_', *PURE}
-    system |= {n for n in undefined if n.startswith(('__gcov', '__asan', '__ubsan', '__lsan'))}
+    # __aarch64_*: GCC's atomics on arm64, calls into libgcc, not stock's
+    system |= {n for n in undefined if n.startswith(('__gcov', '__asan', '__ubsan', '__lsan', '__aarch64_'))}
     if [n for n in system if 'fork' in n or 'exec' in n]:  # gcov's __gcov_fork would start a real process
         raise RuntimeError(f'{SOURCE.name}: a process call reaches no stub: {sorted(system)}')
     calls = sorted(undefined - system)
