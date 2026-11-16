@@ -49,7 +49,8 @@ Personal tracking for work on kelp/q2-pod. This file lives on the orphan
   - [ ] Firmware: card-app Now Playing page (copy of `spot_np`, new file),
         fed by a state file the app writes; replaces stock's
         `airplay_page` (cover only, stock volume popup) while the app runs.
-        Branch `airplay-np`; app side q2-roon `now-playing-file`.
+        Branch `airplay-np` (in progress, not committed yet). App side
+        done: q2-roon `now-playing-file` (bb18675, local, not pushed).
     - [ ] Follow-up: leave the page while AirPlay keeps playing. Closing
           stock's `airplay_page` stops the stream (user, 2026-11-16), so
           Return now only shows stock's page, and a second Return stops
@@ -81,16 +82,19 @@ Line numbers are from commit facf5b0b; check them again on current main.
       bug, not a security issue: only card access can write the list,
       and card access already runs card apps as root (SECURITY.md).
 - [ ] Open the upstream PR for `shelf-remove-dotdot`.
-- [ ] `patch/peq_ui.c:545`: band ENABLE off then on resets an L-only or
-      R-only band to Both.
-- [ ] `patch/peq_player.c` `mp3_toc`: looks for Xing only at the
-      CRC-shifted offset; `mp3_gapless.c` accepts both layouts.
-- [ ] `patch/library_lists.c` `ls_worker`: a failed probe (card gone, no
-      memory) saves 0 s, and the song is never probed again.
-- [ ] `patch/scrobble.c` `scrobble_append`: short `fwrite` leaves a partial
-      line; the next listen joins it and both are lost.
-- [ ] `patch/radio.c` `fetch_run`: leaks the 256 KB buffer when
-      `pthread_create` fails.
+- [x] `patch/peq_ui.c:545`: band ENABLE off then on resets an L-only or
+      R-only band to Both. Fixed on `peq-band-enable-keeps-channel`.
+- [x] `patch/peq_player.c` `mp3_toc`: looks for Xing only at the
+      CRC-shifted offset; `mp3_gapless.c` accepts both layouts. Fixed on
+      `mp3-toc-xing-offset`.
+- [x] `patch/library_lists.c` `ls_worker`: dropped (2026-11-16). The code
+      moved to `durations.c` `duration_probe`, which keeps the old value
+      when the card is gone. Open question: a file TagLib cannot open
+      with the card present still saves 0.
+- [x] `patch/scrobble.c` `scrobble_append`: dropped, fixed upstream (the
+      log is cut back on a failed write; tests exist).
+- [x] `patch/radio.c` `fetch_run`: dropped, not a leak (`fetch_cancel`
+      frees the buffer on Return, the next fetch and page close).
 - [ ] Unverified: `navigation.c` `bt_volume_poll` rewrites config.ini
       several times a second while the headset volume changes. A risk only
       if stock `toolsWriteConfig` writes in place.
@@ -128,6 +132,15 @@ Line numbers are from commit facf5b0b; check them again on current main.
       arm64 Linux: 9137 passed, 2 xfailed on arm64 and x86-64, ASan too.
       Test-only. Fork CI run 43816976229 (2026-11-16): host and the new
       arm64 job both pass.
+  - [ ] Broken on current upstream/main (9b4c2025): "out of high halves"
+        in 4 files. The port moved `_high` to 0x2010 with the 0x5000
+        cap; upstream's new tests need more. Fix in progress (arm64-tests
+        agent). Rebase onto upstream/main before the PR.
+- [ ] q2-roon: `go vet` reports unkeyed `sood.Prop` literals in
+      `internal/roontest/core.go:114-115` (pre-existing).
+- [ ] Remove leftover worktrees: scratchpad/wt-hp, .claude/worktrees,
+      ../q2-wt-preset, ../q2-wt-shelf; on sound q2-wt-preset, q2-wt-shelf
+      and the audit-bug worktrees.
 - [ ] guide.html install note: "insert or remove the card only while the
       Q2 is off" is partly out of date with Eject Card.
 - [ ] Eject Card: a "Mount Card" row, if an ejected card that was not
