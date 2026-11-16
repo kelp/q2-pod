@@ -141,7 +141,8 @@ def build(out, extra=()):
         renames = [f for name in local for f in ('--redefine-sym', f'{name}={obj.stem}__{name}', '--globalize-symbol', f'{obj.stem}__{name}')]
         subprocess.run(['objcopy', *renames, str(obj)], check=True)
     system = {'__stack_chk_fail', '_GLOBAL_OFFSET_TABLE_', *PURE}
-    system |= {n for n in undefined if n.startswith(('__gcov', '__asan', '__ubsan', '__lsan'))}
+    # __aarch64_*: GCC's atomics on arm64, calls into libgcc, not stock's
+    system |= {n for n in undefined if n.startswith(('__gcov', '__asan', '__ubsan', '__lsan', '__aarch64_'))}
     data = {f'fw_ctx_{name}': size for name, size in CONTEXT.items()} | {name: 1 for name in tools_build.GLOBALS}
     names = sorted(undefined - defined - system - set(data))
     (out/'fw_stubs.c').write_text(stubs_source(names, data))
