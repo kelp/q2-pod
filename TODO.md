@@ -70,9 +70,12 @@ Personal tracking for work on kelp/q2-pod. This file lives on the orphan
 
 Line numbers are from commit facf5b0b; check them again on current main.
 
-- [ ] `patch/netupdate.c` `shelf_remove`: deletes paths from the card's
-      `.q2/apps/<id>.files` with no `..` check. Use `dotdot()` from
-      `addon.c`.
+- [x] `patch/netupdate.c` `shelf_remove`: deletes paths from the card's
+      `.q2/apps/<id>.files` with no `..` check. Fixed with `card_path()`
+      on branch `shelf-remove-dotdot` (434d6f59, pushed). An ordinary
+      bug, not a security issue: only card access can write the list,
+      and card access already runs card apps as root (SECURITY.md).
+- [ ] Open the upstream PR for `shelf-remove-dotdot`.
 - [ ] `patch/peq_ui.c:545`: band ENABLE off then on resets an L-only or
       R-only band to Both.
 - [ ] `patch/peq_player.c` `mp3_toc`: looks for Xing only at the

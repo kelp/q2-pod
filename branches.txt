@@ -11,3 +11,4 @@ opra-search
 eject-card
 airplay-remote
 preset-name-ellipsis
+shelf-remove-dotdot
