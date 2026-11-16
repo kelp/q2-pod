@@ -49,6 +49,11 @@ Personal tracking for work on kelp/q2-pod. This file lives on the orphan
   - [ ] Firmware: card-app Now Playing page (copy of `spot_np`, new file),
         fed by a state file the app writes; replaces stock's
         `airplay_page` (cover only, stock volume popup) while the app runs.
+        Branch `airplay-np`; app side q2-roon `now-playing-file`.
+    - [ ] Follow-up: leave the page while AirPlay keeps playing. Closing
+          stock's `airplay_page` stops the stream (user, 2026-11-16), so
+          Return now only shows stock's page, and a second Return stops
+          the music. Find a way to go Home with the stream on.
   - [ ] Check on device: does a BT headset Play during AirPlay stop the
         stream and start the local queue (inferred from disassembly)?
   - [x] Squeezelite rate test (2026-11-15): Roon sends Squeezebox
