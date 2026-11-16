@@ -10,7 +10,7 @@ import struct
 import pytest
 
 import host
-from conftest import O, SPOT_FAIL, SPOT_NOSOCK, SPOT_OK, Config, Deques, Dirent, Game, block, card_fread, claim, fake_lists, high_halves, libc, low_map, text
+from conftest import O, SPOT_FAIL, SPOT_NOSOCK, SPOT_OK, Config, Deques, Dirent, Game, block, card_fread, claim, fake_lists, high_halves, jump, libc, low_map, text
 from fuzz import hostile
 from test_coverflow import png  # an icon's header
 from test_netupdate import JOB_INSTALL, JOB_REMOVE, SH_CANCELLED, SH_CARD, SH_NET, SH_OK, Sh  # test_netupdate.py keeps netupdate.c's App Store mirror
@@ -5454,17 +5454,16 @@ def test_a_url_queue_marks_its_queue_the_apps(fw, mcl, songs):
     s.world.files[b'/tmp/q2-foo.urls'] = b'#Q2URLS/1\tstart=0\nhttps://x/a.flac\tA\n'
     s.play(b'1 /tmp/q2-foo.urls\n')
     loads = s.loaded.value
-    # toolsFreeStSongInfo at its stock address (tidal.c's define): a ret there for the test, put back after
+    # toolsFreeStSongInfo at its stock address (tidal.c's define): a stand-in that only returns, put back after
     free_rec = int(re.findall(r'toolsFreeStSongInfo \(\(void \(\*\)\(void \*\)\)(0x[0-9a-f]+)u\)',
                               (host.ROOT/'patch/tidal.c').read_text())[0], 16)
     claim(free_rec)
-    saved = C.string_at(free_rec, 1)
-    C.memmove(free_rec, b'\xc3', 1)
+    saved = jump(free_rec, lambda *_: 0)
     try:
         s.step()
         s.step()
     finally:
-        C.memmove(free_rec, saved, 1)
+        C.memmove(free_rec, saved, len(saved))
     qa = fw.var('addon__qa', Qa)
     assert s.loaded.value == loads + 1 and qa.app == C.addressof(ap(fw).a[0]) and qa.loads == s.loaded.value
 

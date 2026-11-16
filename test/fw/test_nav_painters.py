@@ -16,7 +16,7 @@ import typing
 import pytest
 
 import host
-from conftest import NAVIGATION_SOURCE, O, POD, c_enum, pod_value, Deques, Files, claim, high_halves, libc, rgba, ui_name, opus
+from conftest import NAVIGATION_SOURCE, O, POD, c_enum, pod_value, Deques, Files, claim, high_halves, jump, libc, rgba, ui_name, opus
 
 STRINGS = dict(re.findall(r'^#define (\w+) "([^"]*)"', (host.ROOT/'patch/offsets.inc').read_text(), re.M))
 LIST_INTO_WHITE, BT_GLYPH = STRINGS['LIST_INTO_WHITE'], STRINGS['BT_GLYPH']
@@ -2961,9 +2961,8 @@ def test_the_update_owed_from_the_dark_follows_at_once_whichever_runs_it_first(f
     update's follow scrolls, and only the next one glides."""
     lrc = lyrics(fw, st, Ui(fw), np=True)
     update = C.CFUNCTYPE(C.c_int, C.c_void_p, C.c_int)(lambda win, force: follow(fw, lrc, 60) and 0)
-    saved = C.string_at(NP_UPDATE, 12)
     claim(NP_UPDATE)
-    C.memmove(NP_UPDATE, b'\x48\xb8' + struct.pack('<Q', C.cast(update, C.c_void_p).value) + b'\xff\xe0', 12)
+    saved = jump(NP_UPDATE, C.cast(update, C.c_void_p).value)
     try:
         tick = fw.fn('ringnav_np_tick', C.c_int, C.c_void_p, C.c_int)
         g(fw, 'g_backlight_status', 0)
@@ -2978,7 +2977,7 @@ def test_the_update_owed_from_the_dark_follows_at_once_whichever_runs_it_first(f
         tick(st('np_win', C.c_void_p).value, 0)
         assert st('lyric_glide').value == 1
     finally:
-        C.memmove(NP_UPDATE, saved, 12)
+        C.memmove(NP_UPDATE, saved, len(saved))
         assert not libc.mprotect(NP_UPDATE & ~0xfff, 0x2000, 3)
 
 
@@ -2986,16 +2985,15 @@ LYRIC_ROWS = 0x53b67c  # stock's rebuild of scroll_lrc's rows, which ringnav_lyr
 
 
 def rows_rebuilt(fw, win, result=0):
-    """ringnav_lyric_rows over stock's builder at its address: x86-64 standing in, returning result,
+    """ringnav_lyric_rows over stock's builder at its address: a stand-in returning result,
     and the page as conftest's map had it again after (bytes and protection), as nothing else runs there."""
     page = LYRIC_ROWS & ~0xfff
-    saved = C.string_at(LYRIC_ROWS, 6)
     claim(LYRIC_ROWS)
-    C.memmove(LYRIC_ROWS, b'\xb8' + struct.pack('<I', result) + b'\xc3', 6)  # mov eax, result; ret
+    saved = jump(LYRIC_ROWS, lambda *_: result)
     try:
         return fw.fn('ringnav_lyric_rows', C.c_int, C.c_void_p)(win.addr)
     finally:
-        C.memmove(LYRIC_ROWS, saved, 6)
+        C.memmove(LYRIC_ROWS, saved, len(saved))
         assert not libc.mprotect(page, 0x2000, 3)
 
 

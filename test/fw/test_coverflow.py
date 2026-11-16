@@ -13,7 +13,7 @@ import pytest
 
 import host
 import test_playlist_art
-from conftest import O, Card as BaseCard, Config, Deques, Dirent, Externpic, Files, ask_cover, block, claim, fnv1a, high_halves, in_fork, libc, low_map, ogg as ogg_file
+from conftest import O, Card as BaseCard, Config, Deques, Dirent, Externpic, Files, ask_cover, block, claim, fnv1a, high_halves, in_fork, jump, libc, low_map, ogg as ogg_file
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 CX, TOP, ART, ONE, MISS = 187, 13, 160, 65536, 99
@@ -3005,9 +3005,7 @@ def stock_bg():
     for k, name in enumerate(('LOCALMUSIC_BG', 'STREAM_BG')):
         at = O[name]
         claim(at)
-        code = b'\x48\xb8' + struct.pack('<Q', C.addressof(counts) + 8 * k) + b'\x48\xff\x00\x31\xc0\xc3'  # ++*counter; return 0
-        saved.append((at, C.string_at(at, len(code))))
-        C.memmove(at, code, len(code))
+        saved.append((at, jump(at, lambda *_, k=k: counts.__setitem__(k, counts[k] + 1))))  # ++*counter; return 0
     yield counts
     for at, data in saved:
         C.memmove(at, data, len(data))
