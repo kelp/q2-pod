@@ -6,7 +6,7 @@ import struct
 
 import pytest
 
-from conftest import O, Deques, Files, block, libc, rgba, text, opus
+from conftest import O, Deques, Files, block, libc, low_map, rgba, text, opus
 
 FAR = 0x7fffffff
 TAG_MAX = 65536
@@ -1000,8 +1000,7 @@ class TagLib:
     def __init__(self, fw, tags, bound=True):
         self.tags, self.calls = tags, []
         self.keep: list[object] = []
-        self.lib = libc.mmap(None, 0x10000, 7, 0x62, -1, 0)  # read, write, run; MAP_PRIVATE | MAP_ANONYMOUS | MAP_32BIT
-        assert self.lib and self.lib < 1 << 32
+        self.lib = low_map(0x10000, 7)  # read, write, run
         for at, kind, fn in ((GET, C.CFUNCTYPE(C.c_void_p, C.c_void_p, C.c_char_p), self.get),
                              (FREE, C.CFUNCTYPE(None, C.c_void_p), self.free)):
             callback = kind(fn)
