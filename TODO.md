@@ -23,9 +23,10 @@ Personal tracking for work on kelp/q2-pod. This file lives on the orphan
   - Largest preset has 20 bands, within `PEQ_BANDS` (30).
   - CC BY-SA 4.0: credit the preset author and link to
     https://github.com/opra-project/OPRA
-- [ ] Listening stats on the device, from `.scrobbler.log`
-- [ ] "More like this" mix: Last.fm or ListenBrainz similar artists,
-      matched against the local library
+- [x] Listening stats on the device, from `.scrobbler.log` (branch
+      `listening-stats`)
+- [x] "More like this" mix: Last.fm or ListenBrainz similar artists,
+      matched against the local library (branch `more-like-this`)
 - [x] Scrobbling: `SESSION_KEY=` for Last.fm. Done upstream
       (`tools/lastfm_key.py`, changelog).
 - [x] Eject Card on the device (branch `eject-card`): stop playback and the card's background
@@ -40,18 +41,20 @@ Personal tracking for work on kelp/q2-pod. This file lives on the orphan
       RAAT and Roon Bridge are not possible: closed protocol, no MIPS build.
       First test the existing AirPlay receiver as a Roon AirPlay zone.
   - [x] Phase 1 works (2026-11-15): q2-roon remote + stock AirPlay zone.
-  - [ ] Firmware: under AirPlay, forward Play/Pause, the side buttons and
+  - [x] Firmware: under AirPlay, forward Play/Pause, the side buttons and
         headset keys to a running card app whose `q2app` has
         `remote=<op>` (stock drops keys 171/222/223 while
-        `airplayGetFlag()==2`). Branch `airplay-remote`.
+        `airplayGetFlag()==2`). Branch `airplay-remote`. Verified on the
+        device (2026-11-15): playpause, next and previous reach Roon.
   - [ ] Firmware: card-app Now Playing page (copy of `spot_np`, new file),
         fed by a state file the app writes; replaces stock's
         `airplay_page` (cover only, stock volume popup) while the app runs.
   - [ ] Check on device: does a BT headset Play during AirPlay stop the
         stream and start the local queue (inferred from disassembly)?
-  - [ ] Phase 2 squeezelite: forum reports say Roon sends software
-        Squeezebox players up to 24/192 (unofficial; test with
-        `-r 384000` and Roon's signal path).
+  - [x] Squeezelite rate test (2026-11-15): Roon sends Squeezebox
+        players up to 24/192 bit-perfect; a 24/384 file is downsampled
+        to 24/192.
+  - [ ] Phase 2 squeezelite zone (on hold).
   - Go memory measured (2026-11-15): RSS 11 MB, heap 3 MB, GC pause
     3 ms total in 10 min. No rewrite needed.
 
@@ -115,14 +118,15 @@ Line numbers are from commit facf5b0b; check them again on current main.
 From a headless diagnosis on 2026-11-14; full report in sound's
 `~/q2-diagnose-report.md`. CI never runs these (they need the stock ZIP).
 
-- [ ] `test/patch.py`: the harness leaves CP0 Status.FR clear, but the
+- [x] `test/patch.py`: the harness leaves CP0 Status.FR clear, but the
       payload is `-mfp64`; clang 19 puts a double in `$f1` (uitofp in
       `coverflow_position_offset`), a reserved instruction under FR=0.
       Fix: set CU1|FR in `Machine.__init__`, as `test/hci_emu.py` does.
-      Confirmed: 3203 scenarios pass with it. Upstream PR candidate.
-- [ ] `test/player_seam.py`: FFmpeg 7.1 writes mvhd timescale 1000; the
+      Confirmed: 3203 scenarios pass with it. Branch `test-patch-fpu-fr`;
+      upstream PR candidate.
+- [x] `test/player_seam.py`: FFmpeg 7.1 writes mvhd timescale 1000; the
       script assumes 44100. Fix: `-movie_timescale 44100` on .m4a outputs.
-      Confirmed.
+      Confirmed. Branch `test-seam-timescale`.
 - [ ] `test/build.py --build`: 60 px `scrsaver_playcover.png` corner alpha
       is 2/255 under ImageMagick 7 Q16 (non-HDRI); the check wants 0.
       Plausible fix: HDRI build, or relax the check to < 4/255.
