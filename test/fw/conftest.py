@@ -66,16 +66,17 @@ if libc.mmap(0x400000, 0x800000, 3, 0x100022, -1, 0) != 0x400000:  # read/write,
 # Strings at chosen addresses: stock's records hold 4-byte pointers a word apart and P() reads 8 here, so a test puts
 # a field's string where its word is the low half and the next field's the high one, in a page mapped for it. Each
 # file takes its high halves from high_halves, which hands none out twice: no two files' pages meet, in any order.
-# From 0x2010: past AddressSanitizer's shadow (to 0x10007fff7fff on x86-64, 0x200fffffffff on arm64), short of its
-# heap (0x500000000000).
-_high = 0x2010
+# On x86-64, 0x1001 to 0x5000: past AddressSanitizer's shadow (to 0x10007fff7fff), short of its heap
+# (0x500000000000). On arm64 its shadow goes to 0x200fffffffff and its heap from 0x500000000000 to 0x540000002000,
+# so 0x5500 to 0xa000: past the heap, short of the python, which a 48-bit arm64 kernel loads at 0xaaaaaaaa0000.
+_high, _HIGH_END = {'x86_64': (0x1001, 0x5000), 'aarch64': (0x5500, 0xa000)}[platform.machine()]
 
 
 def high_halves(n):
     """n high halves no other caller gets this session, as a range: an index past its end fails."""
     global _high
     start, _high = _high, _high + n
-    assert _high <= 0x5000, 'out of high halves'
+    assert _high <= _HIGH_END, 'out of high halves'
     return range(start, _high)
 
 
