@@ -12,7 +12,7 @@ from types import SimpleNamespace
 import pytest
 
 import host
-from conftest import O, Deques, Externpic, Files, ask_cover, claim, fnv1a, high_halves, in_fork, low_map
+from conftest import O, Deques, Externpic, Files, ask_cover, claim, fnv1a, high_halves, in_fork, jump, low_map
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 CX, TOP, ART, ONE, MISS = 187, 13, 160, 65536, 99
@@ -2730,9 +2730,7 @@ def stock_bg():
     for k, name in enumerate(('LOCALMUSIC_BG', 'STREAM_BG')):
         at = O[name]
         claim(at)
-        code = b'\x48\xb8' + struct.pack('<Q', C.addressof(counts) + 8 * k) + b'\x48\xff\x00\x31\xc0\xc3'  # ++*counter; return 0
-        saved.append((at, C.string_at(at, len(code))))
-        C.memmove(at, code, len(code))
+        saved.append((at, jump(at, lambda *_, k=k: counts.__setitem__(k, counts[k] + 1))))  # ++*counter; return 0
     yield counts
     for at, data in saved:
         C.memmove(at, data, len(data))

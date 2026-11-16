@@ -1,6 +1,7 @@
 """patch/playback.c: the grouped queue's order, Play Next's list, the wheel's ticks and the queue snapshot."""
 import ctypes as C
 import os
+import platform
 import random
 import re
 import sqlite3
@@ -9,7 +10,7 @@ import subprocess
 
 import pytest
 
-from conftest import FNV_PRIME, O, Deques, Files, Rows, claim, fnv1a, high_halves, in_fork, libc  # noqa: F401
+from conftest import FNV_PRIME, O, Deques, Files, Rows, claim, fnv1a, high_halves, in_fork, jump, libc, write_code  # noqa: F401
 
 MAGIC = 0x5132524e
 HEADER = '<14I'
@@ -1220,8 +1221,7 @@ class Wheel:
         self.fw = fw
         self.log = (C.c_int * 4096)()
         claim(O['WHEEL_POST'])
-        code = b'\x48\xb8' + struct.pack('<Q', C.addressof(self.log)) + bytes.fromhex('8b08 ff00 8b5738 8954c808 8b5720 8954c80c c3')
-        C.memmove(O['WHEEL_POST'], code, len(code))
+        jump(O['WHEEL_POST'], self.stock_post)
         self.q = (C.c_ushort * 4)(0, used, full, capacity)
         self.loop = C.create_string_buffer(0x40)
         self.info = C.create_string_buffer(0x40)
@@ -1231,6 +1231,11 @@ class Wheel:
         self.post = fw.fn('playback__wheel_post', None, C.c_void_p, C.c_int)
         self.now = 100000
         fw.mock('time_now_ms', lambda *_: self.now)
+
+    def stock_post(self, info, *_):
+        """Stock's post at WHEEL_POST: a count first in the log, then each post's words at 0x38 and 0x20."""
+        n = self.log[0]
+        self.log[0], self.log[2 + 2 * n], self.log[3 + 2 * n] = n + 1, *(C.c_int.from_address(info + k).value for k in (0x38, 0x20))
 
     def touch(self, x, pressure=1, ret=1):
         s = (C.c_int * 6)(x, 0, pressure)
@@ -2894,22 +2899,26 @@ def test_a_pick_that_keeps_nothing_is_stocks(fw, keeps, player, case):
 # Calls from stock's own sites, which the C tells by its return address.
 VIEW_QUEUE_RET, UNPLAYABLE_NEXT_RET, LOAD_DIRECTORY_RET, SPEED_RECONNECT_RET = 0x53acf8, 0x4f4ddc, 0x5d4cb4, 0x51e04c
 PAGE_PICK_RET, ALBUM_PLAY_RET, ALBUMINFO_PLAY_RET = 0x53e514, 0x4a97c0, 0x4ac008
+# A call of the 8-byte address between the two halves that returns to ret, from code that starts back bytes
+# before ret, in this machine's code. x86-64: sub rsp, 8; movabs rax; call rax; add rsp, 8; ret, the callee's
+# stack aligned as the ABI's. arm64: stp x29, x30, [sp, #-16]!; ldr x16 (the address, 16 bytes on); blr x16;
+# ldp x29, x30, [sp], #16; ret; then the address.
+CALLS = {'x86_64': (16, bytes.fromhex('4883ec08 48b8'), bytes.fromhex('ffd0 4883c408 c3')),
+         'aarch64': (12, bytes.fromhex('fd7bbfa9 90000058 00023fd6 fd7bc1a8 c0035fd6'), b'')}
 
 
 @pytest.fixture
 def stock_call(fw):
-    """A firmware function as called from one of stock's sites: x86-64 whose call returns to ret, so
+    """A firmware function as called from one of stock's sites: code whose call returns to ret (CALLS), so
     __builtin_return_address(0) reads ret, as on the Q2. Its bytes go back after the test."""
     saved = []
 
     def call(ret, name, restype, *argtypes):
-        start = ret - 16
+        back, head, tail = CALLS[platform.machine()]
+        start = ret - back
         claim(start)
-        saved.append((start, C.string_at(start, 21)))
         target = C.cast(getattr(fw.lib, name), C.c_void_p).value
-        # sub rsp, 8; mov rax, target; call rax; add rsp, 8; ret: the callee's stack aligned as the ABI's
-        code = bytes.fromhex('4883ec08 48b8') + struct.pack('<Q', target) + bytes.fromhex('ffd0 4883c408 c3')
-        C.memmove(start, code, len(code))
+        saved.append((start, write_code(start, head + struct.pack('<Q', target) + tail)))
         return C.CFUNCTYPE(restype, *argtypes)(start)
     yield call
     for start, data in reversed(saved):
