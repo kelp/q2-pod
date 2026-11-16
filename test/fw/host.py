@@ -32,8 +32,9 @@ PURE = set('memset memcpy memcmp memmove strcmp strncmp strlen strcasecmp strnca
            '__ctype_tolower_loc'.split())
 SOURCES = [ROOT/'patch'/name for name in [*tools_build.NAVIGATION, *tools_peq.UI_SOURCES]]
 # GCC 14 makes these two errors anyway; the rest is the 64-bit build's noise (pointer <-> int casts of
-# stock's 32-bit addresses) or style the Q2's clang build already checks.
-FLAGS = ['-O0', '-g', '-fno-builtin', '-ffreestanding', '-fPIC', '-fkeep-static-functions', '-fno-omit-frame-pointer',
+# stock's 32-bit addresses) or style the Q2's clang build already checks. A plain char is signed, as on the
+# Q2's MIPS (arm64's is unsigned).
+FLAGS = ['-O0', '-g', '-fno-builtin', '-ffreestanding', '-fPIC', '-fkeep-static-functions', '-fno-omit-frame-pointer', '-fsigned-char',
          '-Werror=implicit-function-declaration', '-Werror=int-conversion', '-Wno-int-to-pointer-cast',
          '-Wno-pointer-to-int-cast', '-Wno-builtin-declaration-mismatch', '-Wno-incompatible-pointer-types',
          '-Wno-format', '-Wno-attributes', '-D__asm__(...)=']
