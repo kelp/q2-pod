@@ -12,3 +12,6 @@ eject-card
 airplay-remote
 preset-name-ellipsis
 shelf-remove-dotdot
+peq-band-enable-keeps-channel
+mp3-toc-xing-offset
+test-fw-arm64

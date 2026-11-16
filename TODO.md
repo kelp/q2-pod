@@ -116,6 +116,13 @@ Line numbers are from commit facf5b0b; check them again on current main.
       ellipsis and scroll while selected. Verified on the Q2 in dev 13
       (V00Di, 2026-11-15). Merging after `opra-search` needs the
       `WIDE | NAME` resolution that rerere holds.
+- [ ] Open the upstream PR for `peq-band-enable-keeps-channel`
+      (cab01ba2, pushed to origin). A Left or Right band turned off and on
+      keeps its channel; it went back to Both. Test
+      `test_a_band_turned_off_and_on_keeps_its_channel`.
+- [ ] Open the upstream PR for `mp3-toc-xing-offset` (e1a9a8eb, pushed to
+      origin). `mp3_toc` finds Xing in both CRC frame layouts, as
+      `mp3_tag` does. Test in test/peq.py (runs under check.sh --full).
 - [ ] Open the upstream PR for `test-fw-arm64` (c1d3db8f, pushed to
       origin; six commits from upstream/main ed189751). test/fw runs on
       arm64 Linux: 9137 passed, 2 xfailed on arm64 and x86-64, ASan too.
