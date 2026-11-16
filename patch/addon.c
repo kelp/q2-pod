@@ -90,7 +90,7 @@
 /* This firmware's card-app features, space-separated; a feature adds its word. */
 #define ADDON_CAPS                                                                                 \
     "playlist progress pages library goto sleep game audio sections art window urls sort field "   \
-    "more fav now remote"
+    "more fav now remote np"
 #define ADDON_SECTIONS 8  /* sections an app's first page may have */
 #define SWIPE_CLAIM_PX 24 /* a sideways move this far, twice as far as up or down, is a swipe's */
 #define SWIPE_PX 60       /* and this far at the lift, more than up or down, changes section */
@@ -965,6 +965,7 @@ void addon_poll(void) {
     now_poll();
     library_poll();
     addon_remote_poll();
+    addon_np_poll();
 }
 
 /* An app asked to end through its loop, not its socket, so a frozen one stops too; restart: started
@@ -2402,6 +2403,7 @@ static void qr_open(const char *state, const char *title) {
  * dark modules on the white plate, a row's run of them one rectangle, inside a quiet zone of two
  * modules. */
 void addon_paint(void *w, void *canvas) {
+    addon_np_paint(w, canvas);
     /* the height first: no prop lookup for the page's other widgets */
     int pml = pg.page && I(w, W_H) == progress_h() && P(canvas, CANVAS_LCD)
                   ? widget_get_prop_int(w, "_pml", -1)
