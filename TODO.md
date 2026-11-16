@@ -116,11 +116,11 @@ Line numbers are from commit facf5b0b; check them again on current main.
       ellipsis and scroll while selected. Verified on the Q2 in dev 13
       (V00Di, 2026-11-15). Merging after `opra-search` needs the
       `WIDE | NAME` resolution that rerere holds.
-- [ ] Open the upstream PR for `test-fw-arm64` (c1d3db8f, local, not
-      pushed; six commits from upstream/main ed189751). test/fw runs on
+- [ ] Open the upstream PR for `test-fw-arm64` (c1d3db8f, pushed to
+      origin; six commits from upstream/main ed189751). test/fw runs on
       arm64 Linux: 9137 passed, 2 xfailed on arm64 and x86-64, ASan too.
-      Test-only. Its new arm64 CI job in firmware.yml has not run yet:
-      check it on the fork first (PIE Python, gcc on the runner).
+      Test-only. Fork CI run 43816976229 (2026-11-16): host and the new
+      arm64 job both pass.
 - [ ] guide.html install note: "insert or remove the card only while the
       Q2 is off" is partly out of date with Eject Card.
 - [ ] Eject Card: a "Mount Card" row, if an ejected card that was not
