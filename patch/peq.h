@@ -589,6 +589,9 @@ void addon_eq_poll(int slot, const char *id); /* addon_eq.c: app id's EQ request
 /* addon_remote.c: AirPlay's keys sent to a card app that asks for them (remote=<op>) */
 int addon_remote_on(void), addon_remote_key(unsigned key), addon_remote_send(const char *word);
 void addon_remote_poll(void);
+const char *addon_remote_app(void);
+/* addon_np.c: that app's Now Playing over stock's AirPlay page ("np" in the caps) */
+void addon_np_poll(void), addon_np_paint(void *w, void *canvas);
 /* spotify.c's Q2SPOT/1 framing (docs/librespot.md), which the card apps speak too */
 int spot_escape(const char *s, char *out, unsigned size);
 int spot_put(char *out, unsigned size, const char *s); /* "\t" and s escaped appended */
