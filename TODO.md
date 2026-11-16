@@ -100,6 +100,11 @@ Line numbers are from commit facf5b0b; check them again on current main.
 - [ ] Upstream PR order: whichever of `more-like-this` and `eject-card`
       lands second must call `similar_stop()` from `card_away()`
       (`fixups/0001-*.patch`).
+- [ ] Open the upstream PR for `preset-name-ellipsis` (35e925a2, pushed
+      to origin). Long names in Presets and Import from SD /EQ end in an
+      ellipsis and scroll while selected. Verified on the Q2 in dev 13
+      (V00Di, 2026-11-15). Merging after `opra-search` needs the
+      `WIDE | NAME` resolution that rerere holds.
 - [ ] guide.html install note: "insert or remove the card only while the
       Q2 is off" is partly out of date with Eject Card.
 - [ ] Eject Card: a "Mount Card" row, if an ejected card that was not
