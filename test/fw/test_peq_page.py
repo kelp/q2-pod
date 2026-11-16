@@ -801,6 +801,23 @@ def test_the_presets_screen_lists_saved_presets_sorted(fw):
     assert all(p.chevron(rows[t]) for t in p.captions()[:5]) and not p.chevron(rows['a.peq'])
 
 
+def test_a_long_saved_preset_s_name_ellipsises_in_its_row(fw):
+    cut, focus, style = [], [], {}
+    fw.mock('hscroll_label_set_ellipses', lambda w, on, *_: cut.append((w, i32(on))))
+    fw.mock('hscroll_label_set_only_focus', lambda w, on, *_: focus.append((w, i32(on))))
+    fw.mock('widget_use_style', lambda w, name, *_: style.__setitem__(w, C.string_at(name).decode()))
+    name = 'LETSHUOER DEFIANT-to-iBASSO Exemplar Ultra Long.peq'
+    p = page(fw, files={f'{SAVED}/{name}': b'x'}).advanced()
+    p.click('Presets')
+    rows = dict(p.rows())
+    (label,) = [c for c in p.children(rows[name]) if p.text.get(c) == name]
+    (stock,) = [c for c in p.children(rows['Stock presets']) if p.text.get(c) == 'Stock presets']
+    x, _, w, _ = struct.unpack_from('<4i', p.blocks[label], 0)
+    assert style[label] == 's_scrlabel_white20l'
+    assert (label, 1) in cut and (label, 1) in focus  # without only_focus stock scrolls it from its first paint
+    assert (x, w) == struct.unpack_from('<4i', p.blocks[stock], 0)[::2]  # the other rows' text column
+
+
 def test_more_than_a_page_of_presets_pages(fw):
     files = {f'{SAVED}/{k:03}.peq': b'x' for k in range(130)}
     p = page(fw, files=files).advanced()

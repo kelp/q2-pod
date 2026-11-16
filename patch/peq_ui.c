@@ -227,8 +227,9 @@ static int action(void *ctx, void *event);
 /* A row: the caption on the left, white or, for display-only rows and off bands (DIM), grey, and
  * the value, if any, in grey against the right edge, or left of stock's list_into chevron on a row
  * that opens a screen or picker (INTO: coverflow.c's row_into). Returns the last label, the
- * value's if any. Rows start under the graph where it heads the list. */
-enum { DIM = 1, INTO = 2, SMALL = 4, LONG = 8 };
+ * value's if any. Rows start under the graph where it heads the list. NAME: a caption of any
+ * length (a file's name), in an ellipsis label that scrolls while the row is selected. */
+enum { DIM = 1, INTO = 2, SMALL = 4, LONG = 8, NAME = 16 };
 /* The curve's height in the list: whole rows of the theme's, so whole rows fill it at either
  * end. */
 static int graph_head(void) {
@@ -265,8 +266,15 @@ static void *row_dim(void *view, int index, const char *text, const char *value,
          *label = 0;
     widget_use_style(item, "s_listitem_black");
     for (int i = 0; i < 1 + (value && !(flags & LONG)); ++i) {
-        label = label_create(item, ROW_X, 0, 375 - 2 * ROW_X, rh);
-        widget_use_style(label, "s_label_white20l");
+        if (!i && flags & NAME) {
+            label = hscroll_label_create(item, ROW_X, 0, 375 - 2 * ROW_X, rh);
+            widget_use_style(label, "s_scrlabel_white20l");
+            hscroll_label_set_only_focus(label, 1);
+            hscroll_label_set_ellipses(label, 1);
+        } else {
+            label = label_create(item, ROW_X, 0, 375 - 2 * ROW_X, rh);
+            widget_use_style(label, "s_label_white20l");
+        }
         if (i || flags & DIM || id < 0)
             widget_set_prop_int(label, "style:normal:text_color", (int)CF_GREY);
         if (i) widget_set_prop_str(label, "style:normal:text_align_h", "right");
@@ -937,7 +945,7 @@ static int render(const void *unused) {
         if (ui.file_page < last) row(view, n++, "Next page", FILE_NEXT);
         for (int i = 0, start = ui.file_page * FILE_PAGE; i < FILE_PAGE && start + i < ui.count;
              ++i)
-            row(view, n++, ui.names[start + i], i);
+            row_dim(view, n++, ui.names[start + i], 0, i, NAME);
     }
     widget_set_prop_int(view, "virtual_h", head + n * rh);
     /* ringnav keeps the selection above on a view whose row count it already knows. */
