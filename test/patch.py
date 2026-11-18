@@ -935,7 +935,7 @@ passed()
 for state in (3,2):  # paused and playing both expose the same actions
     m=playing_menu(); m.handlers.pop(syms['mclGetPlayStatus'],None); m.word(0xa50084,state)
     m.press(5000); assert m.release()==1
-    m.press(6000); assert m.hold()==11 and m.labels()==SONG_MENU[:2]+['View Queue']+SONG_MENU[2:]+["Shuffle","Repeat","Group by: Album"]
+    m.press(6000); assert m.hold()==11 and m.labels()==SONG_MENU[:2]+['View Queue']+SONG_MENU[2:]+["More like this","Shuffle","Repeat","Group by: Album"]
     assert m.nodes[m.title]['text']=='B' and m.release()==0
     m.press(7000); assert m.release()==1 and m.get(0xa50084)==state; passed()
 # A tagged song's menu is titled by its tag, not its file name.
@@ -943,7 +943,7 @@ m=playing_menu(); m.word(m.items(m.get(syms['mcl_pdeqplaylist']))[1]+O['REC_TITL
 m.press(6000); assert m.hold()==11 and m.nodes[m.title]['text']=='Bee'; passed()
 # A song in a hidden folder isn't in the Library: no Go to rows, unless its app's q2app has goto=1 (addon_goes).
 m=playing_menu(); m.word(m.items(m.get(syms['mcl_pdeqplaylist']))[1]+O['REC_PATH'],m.string('/mnt/mmc/.podcasts/Show/B.mp3'))
-m.press(6000); assert m.hold()==11 and m.labels()==SONG_MENU[:2]+['View Queue']+SONG_MENU[2:4]+["Shuffle","Repeat","Group by: Album"],m.labels(); passed()
+m.press(6000); assert m.hold()==11 and m.labels()==SONG_MENU[:2]+['View Queue']+SONG_MENU[2:4]+["More like this","Shuffle","Repeat","Group by: Album"],m.labels(); passed()
 # A folder play's untagged record: the player's parsed title once it has parsed that file.
 m=playing_menu(); id3=syms['g_play_id3_info']; m.u.mem_write(id3,b'/p/B\0'); m.u.mem_write(id3+O['ID3_TITLE'],b'Parsed\0')
 m.press(6000); assert m.hold()==11 and m.nodes[m.title]['text']=='Parsed'; passed()
@@ -3154,7 +3154,7 @@ assert len(eitems)>6 and wbox(em,named(em,ed,'list_view'))==(40,99,294,192) and 
 em.word(ed+O['W_PARENT'],em.wm); parents(em,ed); em.top=ed; place(em,em.view,0,0,294,192); em.word(em.view+O['VIEW_CONTENT_H'],32*len(eitems)); em.paint(em.view)
 for _ in range(7): assert em.call()==11
 top=em.get(em.view+O['SCROLL_Y']); assert em.selected(em.view)==7 and top>0; em.paint(em.view); assert [b[1] for b in em.bands if b[2]==294 and b[4]>>24==0xff][:1]==[224-top]
-em.release(); em.pick(8); em.advance(0); cd=em.top; citems=em.nodes[em.view]['children']; assert em.labels()[0]=='Play One Song' and [wbox(em,i)[1::2] for i in citems]==[(32*k,32) for k in range(6)] and wbox(em,named(em,cd,'list_view'))==(40,99,294,192)
+em.release(); em.pick(9); em.advance(0); cd=em.top; citems=em.nodes[em.view]['children']; assert em.labels()[0]=='Play One Song' and [wbox(em,i)[1::2] for i in citems]==[(32*k,32) for k in range(6)] and wbox(em,named(em,cd,'list_view'))==(40,99,294,192)
 tick=[c for i in citems for c in em.nodes[i]['children'] if em.nodes[c]['type']=='image']; assert [em.nodes[c]['image'] for c in tick]==['select'] and wbox(em,tick[0])==(259,0,24,32); passed()
 # A toast: #2b2b2bee in both halves, 22 px, its box holding its font; 24 rows a further line.
 def toast_cl(light,name='msginfo_dialog',text='Update Library first'):
