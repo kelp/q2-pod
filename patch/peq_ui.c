@@ -233,8 +233,10 @@ static int action(void *ctx, void *event);
  * that opens a screen or picker (INTO: coverflow.c's row_into). Returns the last label, the
  * value's if any. Rows start under the graph where it heads the list. WIDE: a LONG row whose
  * caption is of any length too (an OPRA preset's author), cut with an ellipsis where its value
- * starts, at x 166 as About's rows (navigation.c), past Rtings/AutoEQ's 112 px at x 36. */
-enum { DIM = 1, INTO = 2, SMALL = 4, LONG = 8, WIDE = 16 };
+ * starts, at x 166 as About's rows (navigation.c), past Rtings/AutoEQ's 112 px at x 36. NAME: a
+ * caption of any length (a file's name), in an ellipsis label that scrolls while the row is
+ * selected. */
+enum { DIM = 1, INTO = 2, SMALL = 4, LONG = 8, WIDE = 16, NAME = 32 };
 /* The curve's height in the list: whole rows of the theme's, so whole rows fill it at either
  * end. */
 static int graph_head(void) {
@@ -275,8 +277,9 @@ static void *row_dim(void *view, int index, const char *text, const char *value,
      * a row's first hscroll_label, so a WIDE row's long caption keeps its ellipsis, still. */
     void *wide = value && flags & WIDE ? long_value(item, value, rh, x) : 0;
     for (int i = 0; i < 1 + (value && !(flags & LONG)); ++i) {
-        if (flags & WIDE) {
-            label = hscroll_label_create(item, ROW_X, 0, x - 4 - ROW_X, rh);
+        if (!i && flags & (WIDE | NAME)) {
+            label = hscroll_label_create(item, ROW_X, 0,
+                                         (flags & WIDE ? x - 4 : 375 - ROW_X) - ROW_X, rh);
             widget_use_style(label, "s_scrlabel_white20l");
             hscroll_label_set_only_focus(label, 1);
             hscroll_label_set_ellipses(label, 1);
@@ -1113,7 +1116,7 @@ static int render(const void *unused) {
         if (ui.file_page < last) row(view, n++, "Next page", FILE_NEXT);
         for (int i = 0, start = ui.file_page * FILE_PAGE; i < FILE_PAGE && start + i < ui.count;
              ++i)
-            row(view, n++, ui.names[start + i], i);
+            row_dim(view, n++, ui.names[start + i], 0, i, NAME);
     }
     widget_set_prop_int(view, "virtual_h", head + n * rh);
     /* ringnav keeps the selection above on a view whose row count it already knows. */

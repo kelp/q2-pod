@@ -12,6 +12,7 @@
   - Library: **Listening Stats**, under Most Played, shows your time played and your 25 top artists, albums and songs for this week, this month, this year and all time. It counts the listens logged on the card for scrobbling, uploaded or not, so it works without an account.
   - EQ: **Presets → Search OPRA** in Advanced finds your headphones in the OPRA database and saves one of their presets, as **Import from SD /EQ** does. Each preset shows who made it. The first time, **Download OPRA database** saves it to the card over Wi-Fi (about 13 MB); **Update OPRA database** gets the latest one. EQ data from OPRA, https://github.com/opra-project/OPRA, CC BY-SA 4.0.
   - System: **Eject Card**, after System Update, makes the card safe to take out without shutting down. It stops playback and everything that writes to the card, then says "Safe to remove the card". A card still in use stays in, and the message names what holds it. Put a card back in and it is ready again by itself.
+  - EQ: a preset's or an import's name too long for its row in **Presets** and **Import from SD /EQ** ends in an ellipsis, and scrolls while its row is selected. It was cut off at the row's edge.
 - **1.8.7**:
   - Edit Playlist: **Add Songs** opens at once the second time and later in one edit, on a big library. It read and sorted the whole library again each time.
   - Library: **Shuffle Songs**, and **Play Next** or **Add to Queue** while it plays, work faster on a big library.
