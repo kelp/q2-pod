@@ -11,6 +11,7 @@ from test_nav_library_pages import Up
 from test_nav_painters import Ui, strings  # noqa: F401  the window stack
 from test_netupdate import JOB_INSTALL, NU_RUNNING, Nu, Sh
 from test_onlinematch import Al
+from test_opra import Op
 from test_radio import Rd
 from test_similar import Sim
 from test_streaming import Sp, Td
@@ -173,6 +174,7 @@ NEEDS = [('a USB cable in', flag('g_usbdet_value', 1), True),
          ('Download Album Lyrics', state('onlinematch__al', Al, running=1), True),
          ('More like this asking Last.fm', state('similar__sim', Sim, running=1), True),
          ('a Tidal download', state('tidal__td', Td, busy=1), True),
+         ('an OPRA download', state('opra__op', Op, running=1), True),
          ('a time sync pending on a link', lambda q: (q.set('g_syncnettime_flag', 1), q.up()), True),
          ('a time sync pending with no link', flag('g_syncnettime_flag', 1), False),
          ('a link with nothing to do', Q2.up, False),
