@@ -56,13 +56,14 @@ enum {
     ADJUST,
     STOCKS,
     RENAMES,
-    NAMING
+    NAMING,
+    HEADPHONES
 };
 /* clang-format off */
 enum { BACK = 1000, APPLY, RESET, BYPASS, PER_OUTPUT, MENU, IMPORT, SAVE, ENABLE, TYPE, RAISE, LOWER, TYPED, CHANNEL, STEP,
        YES, CANCEL, DELETE, BALANCE, PREAMP, GAIN, /* these three open the picker, in picks[] order */
        FREQUENCY, QUALITY, /* and these two the value menu */ KEYBOARD, STOCK, FILE_PREV, FILE_NEXT, RENAME, NAMED,
-       IMPORT_ALL };
+       IMPORT_ALL, EQ_SETTINGS, EQ_NONE };
 /* clang-format on */
 #define FILE_PAGE 128
 #define GRAPH_W (375 - 2 * PEQ_GRAPH_X)
@@ -600,6 +601,20 @@ static int apply(int on) {
 static void load(eq_state *s);
 static void e3_show(void);
 
+/* Headphones: Quick Settings' Playback hold opens the EQ page on the saved presets, one a
+ * headphone. A pick plays at once, on the output that plays (EQ per Output files it there), and
+ * closes the page; EQ settings goes on to the tab the page was on. */
+static int headphones_next, headphones_tab;
+void peq_headphones(void) {
+    headphones_next = 1;
+    navigator_to("playset/equalizer_page"); /* as Playback's EQ row (0x4bd114) */
+}
+/* The same headphone: its bands and balance; the preamp may be Auto's, worked out again. */
+static int same_filters(const peq_preset *a, const peq_preset *b) {
+    return a->count == b->count && a->balance == b->balance &&
+           !memcmp(a->bands, b->bands, sizeof(a->bands[0]) * (unsigned)a->count);
+}
+
 static int action(void *ctx, void *event) {
     int id = (int)(long)ctx;
     if (id < 0) return 0; /* display-only rows */
@@ -622,7 +637,7 @@ static int action(void *ctx, void *event) {
     /* Band edits keep the preamp on Auto (just enough cut for the boosts) only if it was there. */
     int edit = (id >= ENABLE && id < STEP) || (id < 256 && ui.screen == PICK && ui.pick == GAIN);
     if (id == BACK) {
-        if (ui.screen == HOME) {
+        if (ui.screen == HOME || ui.screen == HEADPHONES) {
             navigator_back();
             return 0;
         }
@@ -637,7 +652,20 @@ static int action(void *ctx, void *event) {
                 ui.from_simple || ui.screen == BAND || ui.screen == PRESETS ? HOME : PRESETS;
     } else if (id == MENU)
         ui.screen = PRESETS;
-    else if (id == IMPORT)
+    else if (id == EQ_SETTINGS) {
+        ui.screen = HOME;
+        ui.tab = headphones_tab;
+    } else if (id == EQ_NONE) {
+        eq_state s;
+        eq_load(&s);
+        s.mode = EQ_OFF;
+        s.hold = 0;
+        if (eq_commit(&s)) {
+            navigator_back();
+            return 0;
+        }
+        snprintf(ui.status, sizeof(ui.status), "Switch failed; EQ unchanged");
+    } else if (id == IMPORT)
         ui.screen = IMPORTS;
     else if (id == IMPORT_ALL)
         import_all();
@@ -755,6 +783,21 @@ static int action(void *ctx, void *event) {
             snprintf(ui.destination, sizeof(ui.destination), PEQ_SAVED "/%s", ui.names[file]);
             ui.previous = DELETES;
             ui.screen = CONFIRM;
+        } else if (file < ui.count && ui.screen == HEADPHONES) {
+            char path[600];
+            snprintf(path, sizeof(path), PEQ_SAVED "/%s", ui.names[file]);
+            peq_preset p;
+            if (!peq_load(path, &p))
+                snprintf(ui.status, sizeof(ui.status), "Cannot read preset; settings unchanged");
+            else {
+                load_draft(&p, ui.names[file], (int)strlen(ui.names[file]) - 4);
+                ui.screen = HEADPHONES; /* load_draft's HOME: the page closes from here */
+                if (apply(1)) {
+                    navigator_back();
+                    return 0;
+                }
+                snprintf(ui.status, sizeof(ui.status), "Apply failed; active EQ unchanged");
+            }
         } else if (file < ui.count && ui.screen == PRESETS) {
             char path[600];
             snprintf(path, sizeof(path), PEQ_SAVED "/%s", ui.names[file]);
@@ -945,6 +988,32 @@ static int render(const void *unused) {
             snprintf(text, sizeof(text), "Save as Manual %02d", i + 1);
             row(view, n++, text, i);
         }
+    } else if (ui.screen == HEADPHONES) {
+        eq_state s;
+        int off = !eq_load(&s) || !g_equalizer_flag || s.mode != EQ_PEQ;
+        row_dim(view, n++, "EQ settings", 0, EQ_SETTINGS, INTO);
+        row_dim(view, n++, "EQ Off", off ? "Playing" : 0, EQ_NONE, 0);
+        char said[sizeof ui.status]; /* a pick's or EQ Off's failure keeps the title */
+        memcpy(said, ui.status, sizeof said);
+        list_files(PEQ_SAVED, ".peq");
+        if (said[0]) memcpy(ui.status, said, sizeof said);
+        int last = ui.count ? (ui.count - 1) / FILE_PAGE : 0;
+        if (ui.file_page > last) { /* the card lost the page's files: its last page, from the top */
+            ui.file_page = last, offset = 0;
+            widget_set_prop_int(view, "_ringnav_index", 0); /* set above, from the page that went */
+        }
+        if (ui.file_page) row(view, n++, "Previous page", FILE_PREV);
+        if (ui.file_page < last) row(view, n++, "Next page", FILE_NEXT);
+        for (int i = 0, start = ui.file_page * FILE_PAGE; i < FILE_PAGE && start + i < ui.count;
+             ++i) {
+            char path[600];
+            peq_preset p;
+            snprintf(text, sizeof(text), "%.*s", (int)strlen(ui.names[start + i]) - 4,
+                     ui.names[start + i]);
+            snprintf(path, sizeof(path), PEQ_SAVED "/%s", ui.names[start + i]);
+            int playing = !off && peq_load(path, &p) && same_filters(&p, &s.peq);
+            row_dim(view, n++, text, playing ? "Playing" : 0, i, 0);
+        }
     } else {
         if (ui.screen == PRESETS) {
             row_dim(view, n++, "Stock presets", 0, STOCK, INTO);
@@ -990,6 +1059,8 @@ static int render(const void *unused) {
         snprintf(text, sizeof(text), "Band %d Gain", ui.band + 1);
     else if (ui.screen == PICK)
         snprintf(text, sizeof(text), ui.pick == PREAMP ? "Preamp" : "Balance");
+    else if (ui.screen == HEADPHONES)
+        snprintf(text, sizeof(text), "Headphones");
     else if ((ui.screen == IMPORTS || ui.screen == PRESETS || ui.screen == DELETES ||
               ui.screen == RENAMES) &&
              ui.count > FILE_PAGE)
@@ -1146,6 +1217,7 @@ static int closed(void *ctx, void *event) {
     if (eq_load(&s) && s.hold && (s.hold = 0, eq_save(&s))) peq_stock_eq(1);
     memset(&e3, 0, sizeof e3);
     if (ui.from_simple) ui.tab = SIMPLE, ui.from_simple = 0; /* reopens on Simple */
+    if (ui.screen == HEADPHONES) ui.tab = headphones_tab;    /* and on the tab it was on */
     ui.bar = 0;
     stop_timer(&ui.timer);
     stop_timer(&ui.keyboard_timer);
@@ -1250,6 +1322,13 @@ int peq_page_init(void *page, void *context) {
     ui.tabs = 0;
     ui.dirty = 0;
     page_load();
+    if (headphones_next) {
+        headphones_next = 0;
+        headphones_tab = ui.tab;
+        ui.tab = ADVANCED;
+        ui.screen = HEADPHONES;
+        ui.status[0] = 0; /* the output's caption: the rows say what plays */
+    }
     e3.focus = E3_LOW;
     e3.h = widget_get_prop_int(page, "h", client_h());
     widget_on(page, EVT_DESTROY, closed, page);

@@ -2203,6 +2203,13 @@ def test_a_held_icon_opens_its_page_and_its_release_doesnt_click(fw, st, name, p
     assert quick.icons[name].props['_quick_hold'] > 0
 
 
+def test_a_held_playback_opens_the_eq_page_on_headphones(fw, st):
+    quick = Quick(fw, st)
+    quick.press('img_playset')
+    quick.hold()
+    assert fw.var('peq_ui__headphones_next', C.c_int).value == 1  # peq_page_init opens on the picker
+
+
 def test_a_release_before_the_hold_is_stocks_tap(fw, st):
     quick = Quick(fw, st)
     quick.press('img_btswitch')

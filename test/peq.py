@@ -417,7 +417,7 @@ extern volatile unsigned char g_equalizer_flag, g_backlight_status;
 list_item_create label_create hscroll_label_create hscroll_label_set_only_focus hscroll_label_set_ellipses list_view_create scroll_view_create widget_use_style
 widget_set_text_utf8 widget_on widget_get_prop_int widget_set_prop_int widget_destroy_children
 widget_resize scroll_view_set_offset widget_invalidate_force timer_add timer_remove
-navigator_back write_int_config widget_factory widget_factory_create_widget widget_set_prop_str
+navigator_back navigator_to write_int_config widget_factory widget_factory_create_widget widget_set_prop_str
 widget_get_text widget_get_text_utf8 widget_set_focused widget_lookup window_manager pages_set_active_by_name edit_set_select
 input_method input_method_request widget_set_name
 canvas_set_fill_color canvas_fill_rect canvas_get_vgcanvas vgcanvas_save vgcanvas_restore vgcanvas_translate
@@ -678,6 +678,7 @@ int window_manager_close_window_force(void *wm, void *w) { return 0; }
 unsigned timer_add(int (*f)(const void *), void *ctx, unsigned ms) { timer_fn = f; return ++timers; }
 int timer_remove(unsigned id) { timer_fn = 0; ++removed; return 0; }
 int navigator_back(void) { return ++backs; }
+int navigator_to(const char *page) { return 0; } /* peq_headphones' */
 static int eqflag = -1;
 int write_int_config(int v, const char *s, const char *k) { if (!strcmp(s, "PLAYSET") && !strcmp(k, "EQFLAG")) eqflag = v; return 0; }
 int shim_eqflag(void) { return eqflag; }
