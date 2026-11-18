@@ -3300,6 +3300,14 @@ int main(void) {
 SHELF_SHIM = r"""
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+int card_path(const char *path) { /* addon.c's: on the card, no ".." segment */
+    if (strncmp(path, PEQ_ROOT "/mnt/mmc/", strlen(PEQ_ROOT "/mnt/mmc/"))) return 0;
+    for (const char *s = path;; ++s) {
+        if (s[0] == '.' && s[1] == '.' && (!s[2] || s[2] == '/')) return 0;
+        if (!(s = strstr(s, "/"))) return 1;
+    }
+}
 void *read_all(const char *path, unsigned max, unsigned *size) { /* scrobble.c's */
     FILE *f = fopen(path, "rb");
     char *p = 0;

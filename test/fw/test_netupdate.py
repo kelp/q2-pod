@@ -713,6 +713,7 @@ def test_a_failed_find_places_nothing(fw):
 
 
 def remove(fw, i):
+    fw.mock('tk_str_start_with', lambda s, p, *_: C.string_at(s).startswith(C.string_at(p)))  # card_path's
     fw.fn('shelf_remove', None, C.c_int)(i)
 
 
@@ -750,6 +751,16 @@ def test_a_folder_left_with_files_stops_the_climb(fw):
     card = Card(fw, {b'/mnt/mmc/.q2/apps/rockbox.files': b'.rockbox/a/b/c\n', b'/mnt/mmc/.rockbox/a/keep': b''})
     remove(fw, 0)
     assert card.of('rmdir') == [(b'/mnt/mmc/.rockbox/a/b',), (b'/mnt/mmc/.rockbox/a',)]
+
+
+def test_a_remove_deletes_nothing_its_list_names_off_the_card(fw):
+    apps(fw, b'x/q2-rockbox')
+    files = b'../../etc/passwd\n.rockbox/../../../bin/sh\n..\n.rockbox/ok\n'
+    card = Card(fw, {b'/mnt/mmc/.q2/apps/rockbox.files': files})
+    remove(fw, 0)
+    gone = [p for (p,) in card.of('unlink') + card.of('rmdir')]
+    assert b'/mnt/mmc/.rockbox/ok' in gone
+    assert not [p for p in gone if b'..' in p], gone
 
 
 def test_a_remove_with_no_list_still_goes(fw):
@@ -2285,6 +2296,7 @@ class Store:
         self.fw, self.card, self.wifi, self.free, self.seconds, self.slept = fw, card, wifi, free, 5000, 0
         self.text, self.toasts, self.timers, self.workers, self.held, self.props = {}, [], [], [], [], {}
         fw.mock('get_wifisignal', lambda *_: self.wifi)
+        fw.mock('tk_str_start_with', lambda s, p, *_: C.string_at(s).startswith(C.string_at(p)))  # card_path's
         fw.mock('window_create', lambda *_: 77)
         fw.mock('window_manager_get_top_window', lambda *_: 77)
         fw.mock('widget_get_child', lambda row, i, *_: row)
