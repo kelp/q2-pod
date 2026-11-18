@@ -6,6 +6,7 @@
   - App Store: the number of apps that can be updated counts an app you installed by hand, whose row says **UPDATE**. It was left out, so the message could say fewer than the rows showed.
   - EQ: **Presets → Import from SD /EQ** has **Import all**, which imports every preset file on the card at once. A preset already saved under the same name stays as it is, and the title says how many were imported, kept and failed.
   - EQ: holding **Playback** in Quick Settings opens **Headphones**, a list of your saved presets with the one playing marked. Picking one plays it at once and closes the list; with EQ per Output on, that output keeps it. **EQ Off** turns the EQ off, and **EQ settings** opens the EQ page as the hold did before.
+  - EQ: **Import from SD /EQ** no longer lists the `._` files that a Mac writes beside your presets on the card. They are not presets and failed to import.
 - **1.8.7**:
   - Edit Playlist: **Add Songs** opens at once the second time and later in one edit, on a big library. It read and sorted the whole library again each time.
   - Library: **Shuffle Songs**, and **Play Next** or **Add to Queue** while it plays, work faster on a big library.

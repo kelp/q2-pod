@@ -1062,6 +1062,13 @@ def test_headphones_opened_from_advanced_goes_on_to_advanced_and_reopens_there(f
     assert p.ui.tab == ADVANCED and p.ui.screen == HOME
 
 
+def test_an_import_list_skips_macos_sidecar_files(fw):
+    p = page(fw, files={f'{IMPORT}/x.txt': b'x', f'{IMPORT}/._x.txt': b'x'}).advanced()
+    p.click('Presets')
+    p.click('Import from SD /EQ')
+    assert p.captions() == ['x.txt']
+
+
 def test_no_imports_says_why(fw):
     p = page(fw).advanced()
     p.click('Presets')
