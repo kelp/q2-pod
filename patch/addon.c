@@ -90,7 +90,7 @@
 /* This firmware's card-app features, space-separated; a feature adds its word. */
 #define ADDON_CAPS                                                                                 \
     "playlist progress pages library goto sleep game audio sections art window urls sort field "   \
-    "more fav now"
+    "more fav now remote"
 #define ADDON_SECTIONS 8  /* sections an app's first page may have */
 #define SWIPE_CLAIM_PX 24 /* a sideways move this far, twice as far as up or down, is a swipe's */
 #define SWIPE_PX 60       /* and this far at the lift, more than up or down, changes section */
@@ -964,6 +964,7 @@ void addon_poll(void) {
     sleep_check();
     now_poll();
     library_poll();
+    addon_remote_poll();
 }
 
 /* An app asked to end through its loop, not its socket, so a frozen one stops too; restart: started
