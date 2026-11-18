@@ -42,7 +42,11 @@ CHAIN_LINKS = {96000: 192000, 48480: 144480, 113760: 209760}  # a first link's f
 SHORT = 50, 500, 8000, 22000
 
 
-def ffmpeg(*args): subprocess.check_call(['ffmpeg', '-v', 'error', '-y', *map(str, args)])
+def ffmpeg(*args):
+    args = list(map(str, args))
+    # FFmpeg 7.1's mp4 muxer writes mvhd timescale 1000; the edit-list checks below assume the audio rate.
+    if args[-1].endswith('.m4a'): args[-1:-1] = ['-movie_timescale', '44100']
+    subprocess.check_call(['ffmpeg', '-v', 'error', '-y', *args])
 
 
 def source(path, seed, rate, samples=None):
