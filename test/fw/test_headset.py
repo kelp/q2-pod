@@ -7,7 +7,7 @@ import struct
 
 import pytest
 
-from conftest import O, ROOT, Game, claim
+from conftest import O, ROOT, Game, claim, jump
 from test_radio import Rd  # test_radio.py keeps the mirror
 
 KEY_PLAY, KEY_BACK_BTN, KEY_FWD_BTN = O['KEY_PLAY'], O['KEY_BACK_BTN'], O['KEY_FWD_BTN']
@@ -1577,14 +1577,13 @@ def status_callback(fw):
 
 @pytest.fixture
 def stock_status():
-    """x86-64 at stock's status callback logging its first three arguments, and BTLINKMAC's bytes; both put
+    """A stand-in at stock's status callback logging its first three arguments, and BTLINKMAC's bytes; both put
     back after, as conftest's map outlives a load."""
     claim(STOCK_STATUS)
     claim(LINK_MAC)
     saved = C.string_at(STOCK_STATUS, 64), C.string_at(LINK_MAC, 32)
     log = (C.c_long * 3)()
-    code = (b'\x48\xb8' + struct.pack('<Q', C.addressof(log)) + bytes.fromhex('488938 48897008 48895010') + b'\xc3')
-    C.memmove(STOCK_STATUS, code, len(code))
+    jump(STOCK_STATUS, lambda *a: log.__setitem__(slice(0, 3), a[:3]))
     yield log
     C.memmove(STOCK_STATUS, saved[0], 64)
     C.memmove(LINK_MAC, saved[1], 32)

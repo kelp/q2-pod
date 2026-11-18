@@ -29,8 +29,9 @@ PURE = set('memset memcpy memcmp memmove strcmp strncmp strlen strcasecmp strnca
            'calloc realloc free snprintf __isoc99_sscanf qsort pow cos sin cosf sinf log sqrt atoi strtol'.split())
 SOURCES = [ROOT/'patch'/name for name in [*tools_build.NAVIGATION, *tools_peq.UI_SOURCES]]
 # GCC 14 makes these two errors anyway; the rest is the 64-bit build's noise (pointer <-> int casts of
-# stock's 32-bit addresses) or style the Q2's clang build already checks.
-FLAGS = ['-O0', '-g', '-fno-builtin', '-ffreestanding', '-fPIC', '-fkeep-static-functions', '-fno-omit-frame-pointer',
+# stock's 32-bit addresses) or style the Q2's clang build already checks. A plain char is signed, as on the
+# Q2's MIPS (arm64's is unsigned).
+FLAGS = ['-O0', '-g', '-fno-builtin', '-ffreestanding', '-fPIC', '-fkeep-static-functions', '-fno-omit-frame-pointer', '-fsigned-char',
          '-Werror=implicit-function-declaration', '-Werror=int-conversion', '-Wno-int-to-pointer-cast',
          '-Wno-pointer-to-int-cast', '-Wno-builtin-declaration-mismatch', '-Wno-incompatible-pointer-types',
          '-Wno-format', '-Wno-attributes', '-D__asm__(...)=']
@@ -140,7 +141,8 @@ def build(out, extra=()):
         renames = [f for name in local for f in ('--redefine-sym', f'{name}={obj.stem}__{name}', '--globalize-symbol', f'{obj.stem}__{name}')]
         subprocess.run(['objcopy', *renames, str(obj)], check=True)
     system = {'__stack_chk_fail', '_GLOBAL_OFFSET_TABLE_', *PURE}
-    system |= {n for n in undefined if n.startswith(('__gcov', '__asan', '__ubsan', '__lsan'))}
+    # __aarch64_*: GCC's atomics on arm64, calls into libgcc, not stock's
+    system |= {n for n in undefined if n.startswith(('__gcov', '__asan', '__ubsan', '__lsan', '__aarch64_'))}
     data = {f'fw_ctx_{name}': size for name, size in CONTEXT.items()} | {name: 1 for name in tools_build.GLOBALS}
     names = sorted(undefined - defined - system - set(data))
     (out/'fw_stubs.c').write_text(stubs_source(names, data))

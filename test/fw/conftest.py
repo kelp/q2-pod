@@ -9,6 +9,7 @@ import functools
 import hashlib
 import os
 import pathlib
+import platform
 import re
 import struct
 import sys
@@ -65,15 +66,17 @@ if libc.mmap(0x400000, 0x800000, 3, 0x100022, -1, 0) != 0x400000:  # read/write,
 # Strings at chosen addresses: stock's records hold 4-byte pointers a word apart and P() reads 8 here, so a test puts
 # a field's string where its word is the low half and the next field's the high one, in a page mapped for it. Each
 # file takes its high halves from high_halves, which hands none out twice: no two files' pages meet, in any order.
-# From 0x1001: past AddressSanitizer's shadow (to 0x10007fff7fff), short of its heap (0x500000000000).
-_high = 0x1001
+# On x86-64, 0x1001 to 0x5000: past AddressSanitizer's shadow (to 0x10007fff7fff), short of its heap
+# (0x500000000000). On arm64 its shadow goes to 0x200fffffffff and its heap from 0x500000000000 to 0x540000002000,
+# so 0x5500 to 0xa000: past the heap, short of the python, which a 48-bit arm64 kernel loads at 0xaaaaaaaa0000.
+_high, _HIGH_END = {'x86_64': (0x1001, 0x5000), 'aarch64': (0x5500, 0xa000)}[platform.machine()]
 
 
 def high_halves(n):
     """n high halves no other caller gets this session, as a range: an index past its end fails."""
     global _high
     start, _high = _high, _high + n
-    assert _high <= 0x5000, 'out of high halves'
+    assert _high <= _HIGH_END, 'out of high halves'
     return range(start, _high)
 
 
@@ -126,13 +129,52 @@ def claim(address):
     if libc.mmap(page, 0x2000, 7, 0x100022, -1, 0) != page:  # MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED_NOREPLACE
         assert not libc.mprotect(page, 0x2000, 7)
 
+# A jump to the 8-byte address between these two halves, in this machine's code: movabs rax; jmp rax on
+# x86-64, and on arm64 ldr x16 (the address, 8 bytes on); br x16.
+JUMPS = {'x86_64': (bytes.fromhex('48b8'), bytes.fromhex('ffe0')), 'aarch64': (bytes.fromhex('50000058 00021fd6'), b'')}
+clear_cache = getattr(C.CDLL('libgcc_s.so.1'), '__clear_cache')
+clear_cache.argtypes = [C.c_void_p, C.c_void_p]
+_stand_ins = []  # their callbacks: stock's address can call one after its test, in this process
+
+
+def write_code(address, data):
+    """Machine code at address, in a page claim() made executable: the bytes it replaced. arm64 runs what it last
+    read there unless its instruction cache is cleared, so this clears it."""
+    saved = C.string_at(address, len(data))
+    C.memmove(address, data, len(data))
+    clear_cache(address, address + len(data))
+    return saved
+
+
+def jump(address, fn):
+    """Stand-in code at address (stock's, in a page claim() made executable) for a function the C calls there: a
+    jump to fn, which takes six integer arguments as Python ints and returns an int (None is 0), or to the code at
+    fn's address. The bytes it replaced, for the test to put back."""
+    target = fn
+    if not isinstance(fn, int):
+        callback = C.CFUNCTYPE(C.c_long, *[C.c_long] * 6)(lambda *a: fn(*a) or 0)
+        _stand_ins.append(callback)
+        target = C.cast(callback, C.c_void_p).value
+    head, tail = JUMPS[platform.machine()]
+    return write_code(address, head + struct.pack('<Q', target) + tail)
+
+
+def low_map(size, prot=3):
+    """size bytes of zeroed pages from 1 GB to 2 GB, where x86-64's MAP_32BIT maps them, on any machine: stock's
+    pointers are 32 bits. The first place free, probed a 64 KB step at a time."""
+    for at in range(0x40000000, 0x80000000 - size, 0x10000):
+        if libc.mmap(at, size, prot, 0x100022, -1, 0) == at:  # MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED_NOREPLACE
+            return at
+    raise MemoryError(f'no {size:#x} bytes free under 2 GB')
+
+
 def ask_cover(fw):
     """A card app's song asks for its cover, as get_onlineid3info does (build.py COVERINFO_CALL, tidal.c
     app_coverinfo): stock's player_set_coverinfo sets g_playcover_type to 0 for its cover thread, here before the
     call, as its stand-in at tidal.c's own define only returns. The stand-in outlives the test: call it in_fork."""
     at = int(re.findall(r'#define player_set_coverinfo \(\(.*\)(0x[0-9a-f]+)u\)', (ROOT/'patch/tidal.c').read_text())[0], 16)
     claim(at)
-    C.memmove(at, b'\xc3', 1)  # ret
+    jump(at, lambda *_: 0)
     fw.mock('tk_str_start_with', lambda s, p, *_: C.string_at(s).startswith(C.string_at(p)))
     rec, id_ = C.create_string_buffer(0x60), C.create_string_buffer(b'app:1:0')  # a card app's record
     C.c_void_p.from_address(C.addressof(rec) + O['REC_TIDAL_ID']).value = C.addressof(id_)
@@ -440,11 +482,9 @@ def opus(tags):
 
 
 def stock_stub(address, result, log):
-    """x86-64 at a fixed stock address: its first three arguments logged, result returned. Only ever in a fork."""
+    """A stand-in at a fixed stock address: its first three arguments logged, result returned. Only ever in a fork."""
     claim(address)
-    code = (b'\x48\xb8' + struct.pack('<Q', C.addressof(log)) + bytes.fromhex('488938 48897008 48895010') +
-            b'\xb8' + struct.pack('<I', result) + b'\xc3')
-    C.memmove(address, code, len(code))
+    jump(address, lambda *a: log.__setitem__(slice(0, 3), a[:3]) or result)
 
 
 class Config:

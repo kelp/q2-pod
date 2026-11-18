@@ -16,7 +16,7 @@ import struct
 import pytest
 
 import host
-from conftest import NAVIGATION_SOURCE, FNV_PRIME, O, Deques, fnv1a, high_halves, libc
+from conftest import NAVIGATION_SOURCE, FNV_PRIME, O, Deques, fnv1a, high_halves, libc, low_map
 
 libc.munmap.argtypes = [C.c_void_p, C.c_size_t]
 FIXED = 0x100022  # MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED_NOREPLACE
@@ -51,7 +51,7 @@ def key(path):
 
 class Memory:
     """Stock's records as the firmware reads them here. Each lies below 2 GB, as crossfade.c keeps one in an int (in a
-    MAP_32BIT block, wherever the kernel finds room). Its string fields lie 4 bytes apart (stock's 32-bit layout) and
+    block from conftest.low_map). Its string fields lie 4 bytes apart (stock's 32-bit layout) and
     each read takes 8, so a field's low word is its string's and the next field's low word that string's high half:
     every word from the path's on names a 4 GB block of its own (in BLOCK, this file's high halves:
     conftest.high_halves), where its string sits."""
@@ -59,7 +59,7 @@ class Memory:
 
     def __init__(self):
         self.maps, self.n = [], 0
-        self.low = libc.mmap(0, 0x10000, 3, 0x62, -1, 0)  # MAP_PRIVATE | MAP_ANONYMOUS | MAP_32BIT
+        self.low = low_map(0x10000)
         assert self.low and self.low + 0x10000 <= 1 << 31
         self.maps.append((self.low, 0x10000))
 
