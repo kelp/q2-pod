@@ -885,9 +885,31 @@ def test_an_import_with_a_bad_line_says_which(fw):
     p = page(fw, files={f'{IMPORT}/x.txt': b'Preamp: -3 dB\nnonsense\n'}).advanced()
     p.click('Presets')
     p.click('Import from SD /EQ')
-    assert p.captions() == ['x.txt'] and p.title() == 'Presets'
+    assert p.captions() == ['Import all', 'x.txt'] and p.title() == 'Presets'
     p.click('x.txt')
     assert p.title() == 'Line 2: unsupported command' and f'{SAVED}/x.peq' not in p.card.files
+
+
+GOOD = b'Preamp: -3 dB\nFilter 1: ON PK Fc 1000 Hz Gain -2 dB Q 1\n'
+
+
+def test_import_all_saves_each_new_file_and_counts_the_rest(fw):
+    p = page(fw, files={f'{IMPORT}/a.txt': GOOD, f'{IMPORT}/b.txt': GOOD, f'{IMPORT}/bad.txt': b'nonsense\n',
+                        f'{IMPORT}/c.txt': GOOD, f'{SAVED}/c.peq': b'kept'}).advanced()
+    p.click('Presets')
+    p.click('Import from SD /EQ')
+    p.click('Import all')
+    assert p.title() == 'Imported 2; 1 already saved; 1 failed' and p.ui.screen == IMPORTS
+    assert f'{SAVED}/a.peq' in p.card.files and f'{SAVED}/b.peq' in p.card.files
+    assert p.card.files[f'{SAVED}/c.peq'] == b'kept' and f'{SAVED}/bad.peq' not in p.card.files
+
+
+def test_import_all_of_only_new_files_says_how_many(fw):
+    p = page(fw, files={f'{IMPORT}/a.txt': GOOD, f'{IMPORT}/b.txt': GOOD}).advanced()
+    p.click('Presets')
+    p.click('Import from SD /EQ')
+    p.click('Import all')
+    assert p.title() == 'Imported 2'
 
 
 def test_no_imports_says_why(fw):
