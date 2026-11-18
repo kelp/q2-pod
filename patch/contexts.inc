@@ -34,6 +34,9 @@
 { "app_songs", CTX_DYNAMIC, 0 },       /* runtime window (patch/library_lists.c) */
 { "addon_page", CTX_DYNAMIC, 0 },      /* runtime window (patch/addon.c) */
 { "battery_page", CTX_DYNAMIC, 0 },    /* runtime window (patch/battery.c) */
+{ "stats_page", CTX_DYNAMIC, 0 },      /* runtime window (patch/listening_stats.c) */
+{ "stats_period_page", CTX_DYNAMIC, 0 }, /* runtime window (patch/listening_stats.c) */
+{ "stats_top_page", CTX_DYNAMIC, 0 },  /* runtime window (patch/listening_stats.c) */
 { "album_page", CTX_LOCAL, 0 },
 { "albuminfo_page", CTX_LOCAL, RING },
 { "allmusic_page", CTX_LOCAL, RING },

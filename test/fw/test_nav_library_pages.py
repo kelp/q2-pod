@@ -2329,7 +2329,7 @@ def test_the_library_s_rows_in_their_order(fw, ui, st, theme, lead):
     # My Fav and Frequent hidden, kept in the page for stock's index: Ratings and Most Played list theirs
     assert page_rows(ui, view) == [(c, c not in ('My Fav', 'Frequent')) for c in lead + [
         'Shuffle', 'Artist', 'Album', 'All Songs', 'Genre', 'Era', 'Playlist', 'Ratings', 'My Fav', 'Recently Added', 'Recent',
-        'Most Played', 'Frequent', 'Hi-Res', 'Long Songs', 'Games', 'Update Library']]
+        'Most Played', 'Frequent', 'Listening Stats', 'Hi-Res', 'Long Songs', 'Games', 'Update Library']]
 
 
 def test_the_library_adds_the_card_s_media_folders_and_upload(fw, ui):
@@ -2348,7 +2348,7 @@ def test_the_library_s_added_rows_have_no_name_for_stock_s_click(fw, ui):
               if w == ui.kids[item][0] and e == EVT_CLICK}
     assert clicks['Shuffle'] == ui.fn('shuffle_menu') and clicks['Most Played'] == ui.fn('most_played')
     assert clicks['Ratings'] == ui.fn('ratings_menu') and clicks['Long Songs'] == ui.fn('long_songs')
-    assert clicks['Era'] == ui.fn('era_menu')
+    assert clicks['Era'] == ui.fn('era_menu') and clicks['Listening Stats'] == ui.fn('listening_stats')
 
 
 def test_a_library_that_is_not_stock_s_is_left(fw, ui):
