@@ -80,6 +80,7 @@ static struct {
     int screen, band, step, count, previous, rendered, dirty, pick, adjust, tries;
     int capacity, file_page;
     int tab, tabs;   /* tabs: the wheel is on the tab bar, over Advanced's list */
+    int channel;     /* the band's channels before its switch turned it off: 0 for Both */
     int from_simple; /* Advanced's Stock presets screen, opened from Simple's Presets */
     double typed;
     peq_preset draft, candidate, named; /* named: the preset applied under applied's name */
@@ -759,9 +760,11 @@ static int action(void *ctx, void *event) {
             snprintf(ui.status, sizeof(ui.status), "Switch failed; EQ unchanged");
     } else if (id == PER_OUTPUT)
         ringnav_eq_output_toggle();
-    else if (id == ENABLE)
-        b->enabled = !b->enabled;
-    else if (id == TYPE)
+    else if (id == ENABLE) {
+        /* Off then on again keeps a Left or Right band on that channel. */
+        if (b->enabled) ui.channel = b->enabled;
+        b->enabled = b->enabled ? 0 : ui.channel ? ui.channel : 1;
+    } else if (id == TYPE)
         b->type = (b->type + 1) % 3;
     else if (id == CHANNEL && b->enabled)
         b->enabled = b->enabled % 3 + 1; /* both, left, right */
@@ -800,6 +803,7 @@ static int action(void *ctx, void *event) {
         int file = ui.file_page * FILE_PAGE + id;
         if (ui.screen == HOME && id < PEQ_BANDS) {
             ui.band = id;
+            ui.channel = 0;
             ui.screen = BAND;
         } else if (ui.screen == PICK && id < picks[ui.pick - BALANCE].rows) {
             /* Preamp's Auto row: the band-edit cut, which later band edits then keep up to date. */
