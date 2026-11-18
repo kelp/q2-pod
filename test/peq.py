@@ -2260,6 +2260,11 @@ int main(void) {
     assert(mp3_toc(h, sizeof h, length / 4, &frac, &length) && fabs(frac - 0.125) < 1e-9);
     assert(mp3_toc(h, sizeof h, length * 0.995, &frac, &length) && frac > 0.98 && frac < 1);
     assert(mp3_toc(h, sizeof h, length, &frac, &length) && frac == 1);
+    h[1] = 0xfa;                                          /* CRC: LAME keeps Xing at 36 */
+    assert(mp3_toc(h, sizeof h, length / 2, &frac, &length) && fabs(frac - 0.25) < 1e-9);
+    memmove(h + 38, h + 36, 120);                         /* and others put it after the CRC */
+    assert(mp3_toc(h, sizeof h, length / 2, &frac, &length) && fabs(frac - 0.25) < 1e-9);
+    memmove(h + 36, h + 38, 120); h[1] = 0xfb;
     assert(!mp3_toc(h, 100, 10, &frac, &length));        /* cut short */
     h[43] = 3;                                            /* no table */
     assert(!mp3_toc(h, sizeof h, 10, &frac, &length));

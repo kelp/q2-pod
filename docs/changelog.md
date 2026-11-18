@@ -15,6 +15,7 @@
   - EQ: a preset's or an import's name too long for its row in **Presets** and **Import from SD /EQ** ends in an ellipsis, and scrolls while its row is selected. It was cut off at the row's edge.
   - App Store: removing an app deletes only files on the card. A damaged list of an app's files could name a file outside the card, and the remove deleted it.
   - EQ: a band set to **Left** or **Right** stays on that channel when you turn its **Band** switch off and on again. It went back to **Both**.
+  - Playback: seeking in a variable-bitrate MP3 that LAME made with CRC protection now goes to the right place, as in other VBR MP3s. The Q2 missed its seek table, so a seek could land away from the time you picked.
 - **1.8.7**:
   - Edit Playlist: **Add Songs** opens at once the second time and later in one edit, on a big library. It read and sorted the whole library again each time.
   - Library: **Shuffle Songs**, and **Play Next** or **Add to Queue** while it plays, work faster on a big library.
