@@ -1,5 +1,6 @@
 # Feature branches merged into `integration`, in order.
 # Each branch starts from upstream/main and becomes one upstream PR.
+payload-room
 peq-import-all
 headphone-picker
 eq-import-skip-appledouble
