@@ -202,3 +202,21 @@ From a headless diagnosis on 2026-11-14; full report in sound's
       is 2/255 under ImageMagick 7 Q16 (non-HDRI); the check wants 0.
       Plausible fix: HDRI build, or relax the check to < 4/255.
 - [ ] docs/building.md: list `flac` among the test tools.
+
+## Cover Flow CPU (measured 2026-11-22)
+
+- Scrolling Cover Flow: 57 frames a second (fb0 page flips), demo 60% of
+  one core, so about 10.5 ms of CPU a frame. At rest: under 1 flip a
+  second.
+- ringnav_rotate: 0.80 ms a full 375x320 frame into fb0 (fb0 is cached
+  memory). An MSA 4x4 rotate: 0.65 ms. An 8-column scalar block: 1.0 ms.
+  -O2: 0.82 ms. MSA would save about 2% of a frame, and unicorn cannot
+  run MSA to check it. Not done.
+- coverflow.c at -O2: +0.3% instructions on every Cover Flow COST line,
+  +15 KB payload, and over patch.py's FRAME_BOUND for Minimal. Not done.
+- Left to try, each a bigger change: column-major cover textures (column
+  reads a texel 640 bytes from the last), or Cover Flow drawn in the
+  panel's portrait layout so its area needs no rotate.
+- patch.py on upstream main faults in coverflow_position_paint with
+  sound's clang 19 (odd double registers under the emulator's FR=0):
+  branch test-patch-fpu-fr fixes it. Worth sending upstream.
