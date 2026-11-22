@@ -99,6 +99,25 @@ Line numbers are from commit facf5b0b; check them again on current main.
       several times a second while the headset volume changes. A risk only
       if stock `toolsWriteConfig` writes in place.
 
+## Test hangs
+
+- [ ] `test/fw` has no per-test timeout, so a hung test spins forever.
+      Found 2026-11-21: 9 orphaned pytest-xdist workers in the q2-arm
+      VM ran at 100% CPU each for 8+ hours. They were in
+      `test_tidal.py`'s "starts the app and waits for it" tests, on
+      branches without `test-fw-arm64`'s clock mock (c00be9be). Cause:
+      `spot_exchange`'s `while (now_ms() < end)` loop reads the unmocked
+      `fw_clock_gettime`, which leaves the struct unset, so `end` never
+      comes (upstream-issues.md entry 2). The workers kept running after
+      their parent exited (ppid 1).
+      Proposed fix, not landed: an autouse fixture in
+      `test/fw/conftest.py` that calls
+      `faulthandler.dump_traceback_later(60, exit=True)` before each test
+      and `cancel_dump_traceback_later()` after. It is stdlib, and its
+      watchdog thread fires even while the test is in C. The worker
+      prints the stack and exits; `--max-worker-restart 0` then fails
+      the run instead of hanging it.
+
 ## Cleanups (follow-ups from feature branches)
 
 - [ ] Branch coverage on new C at least upstream's (87.1% branches, 98.3%
