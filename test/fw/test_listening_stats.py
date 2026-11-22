@@ -94,21 +94,21 @@ def test_a_period_shows_its_time_played_and_how_many_of_each(fw):
     log = (listen('A', 'one', album='Hits', length=3000) + listen('A', 'two', album='Hits', length=600) +
            listen('B', 'one', length=125))
     s = Stats(fw, log)
-    assert s.period('All Time') == [('Time played', f'1 h 2 min {DOT} 3 plays'), ('Top Artists', '2 artists'),
+    assert s.period('All Time') == [('Time Played', f'1 h 2 min {DOT} 3 plays'), ('Top Artists', '2 artists'),
                                     ('Top Albums', '1 album'), ('Top Songs', '3 songs')]
     assert s.ui.name[s.ui.top()] == 'stats_period_page' and 'All Time' in s.ui.shown(s.ui.top())
 
 
 def test_under_an_hour_shows_minutes_alone(fw):
     s = Stats(fw, listen('A', 'one', length=59) + listen('A', 'one', length=61))
-    assert s.period('All Time')[0] == ('Time played', f'2 min {DOT} 2 plays')
+    assert s.period('All Time')[0] == ('Time Played', f'2 min {DOT} 2 plays')
     s.back()
-    assert s.period('This Week')[0] == ('Time played', f'2 min {DOT} 2 plays')
+    assert s.period('This Week')[0] == ('Time Played', f'2 min {DOT} 2 plays')
 
 
 def test_one_listen_is_one_play(fw):
     s = Stats(fw, listen('A', 'one', length=60))
-    assert s.period('All Time')[0] == ('Time played', f'1 min {DOT} 1 play')
+    assert s.period('All Time')[0] == ('Time Played', f'1 min {DOT} 1 play')
     s.ui.click(s.ui.top(), 1)
     assert s.ui.rows(s.ui.top()) == [('A', '1 play')]
 
@@ -155,7 +155,7 @@ def test_uploaded_listens_count_with_the_unsent(fw):
 
 def test_either_log_alone_counts(fw):
     s = Stats(fw, None, sent=listen('A', 'one'))
-    assert s.period('All Time')[0] == ('Time played', f'3 min {DOT} 1 play')
+    assert s.period('All Time')[0] == ('Time Played', f'3 min {DOT} 1 play')
 
 
 def test_skips_headers_and_damaged_lines_count_nothing(fw):
@@ -164,7 +164,7 @@ def test_skips_headers_and_damaged_lines_count_nothing(fw):
            listen('A', 'bad time', at='12x') + listen('A', 'zero', at=0) + listen('A', 'big', at='12345678901') +
            '#TZ/UTC\n' + 'x' * 10000 + '\n' + good + listen('A', 'cut')[:-1])
     s = Stats(fw, log, sent='\n' + good)
-    assert s.period('All Time')[0] == ('Time played', f'2 min {DOT} 2 plays')
+    assert s.period('All Time')[0] == ('Time Played', f'2 min {DOT} 2 plays')
     s.ui.click(s.ui.top(), 3)
     assert s.ui.rows(s.ui.top()) == [('one', f'A {DOT} 2 plays')]
 
@@ -182,7 +182,7 @@ def test_the_periods_start_at_local_midnight_monday_the_1st_and_january(fw):
 
 def test_a_period_with_no_listens_says_so(fw):
     s = Stats(fw, listen('A', 'x', at=YEAR - 1))
-    assert s.period('This Week')[0] == ('Time played', f'0 min {DOT} 0 plays')
+    assert s.period('This Week')[0] == ('Time Played', f'0 min {DOT} 0 plays')
     s.ui.click(s.ui.top(), 1)
     assert 'No listens' in s.ui.shown(s.ui.top())
 
@@ -243,7 +243,7 @@ def test_once_the_table_is_full_a_new_name_counts_its_plays_but_is_not_ranked(fw
     log = ''.join(listen(f'a{k:05}', f's{k:05}') for k in range(6144))
     log += listen('new', 'song') + listen('a00000', 's00000')
     s = Stats(fw, log)
-    assert s.period('All Time') == [('Time played', f'341 h 26 min {DOT} 6146 plays'),
+    assert s.period('All Time') == [('Time Played', f'341 h 26 min {DOT} 6146 plays'),
                                     ('Top Artists', '6144 artists'), ('Top Albums', '0 albums'),
                                     ('Top Songs', '6144 songs')]
     s.ui.click(s.ui.top(), 1)
@@ -257,7 +257,7 @@ def test_once_the_names_fill_their_pool_a_new_name_is_not_ranked(fw):
     fits."""
     name = [f'{k:03}' + 'p' * 1997 for k in range(300)]
     s = Stats(fw, ''.join(listen(n, 'x', length=60) for n in name) + listen(name[0], 'x', length=60))
-    assert s.period('All Time') == [('Time played', f'5 h 1 min {DOT} 301 plays'), ('Top Artists', '262 artists'),
+    assert s.period('All Time') == [('Time Played', f'5 h 1 min {DOT} 301 plays'), ('Top Artists', '262 artists'),
                                     ('Top Albums', '0 albums'), ('Top Songs', '261 songs')]
     s.ui.click(s.ui.top(), 1)
     assert s.ui.rows(s.ui.top())[:2] == [(name[0], '2 plays'), (name[1], '1 play')]
@@ -266,7 +266,7 @@ def test_once_the_names_fill_their_pool_a_new_name_is_not_ranked(fw):
 def test_a_time_with_a_sign_or_past_32_bits_counts_nothing(fw):
     log = listen('A', 'minus', at='-1') + listen('A', 'space', at=' 1') + listen('A', 'big', at=4294967296)
     s = Stats(fw, log + listen('A', 'last', at=4294967295, length=60))
-    assert s.period('All Time')[0] == ('Time played', f'1 min {DOT} 1 play')
+    assert s.period('All Time')[0] == ('Time Played', f'1 min {DOT} 1 play')
     s.ui.click(s.ui.top(), 3)
     assert s.ui.rows(s.ui.top()) == [('last', f'A {DOT} 1 play')]
 

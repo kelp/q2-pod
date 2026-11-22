@@ -258,7 +258,7 @@ static int period_open(void *ctx, event_t *event) {
         tk_snprintf(detail, sizeof detail, tr("%u h %u min · %s"), min / 60, min % 60, plays);
     else
         tk_snprintf(detail, sizeof detail, tr("%u min · %s"), min, plays);
-    page_row_detail(view, 0, tr("Time played"), detail, 0);
+    page_row_detail(view, 0, tr("Time Played"), detail, 0);
     for (unsigned k = 0; k < KINDS; k++) {
         unsigned n = s->count[p][k];
         tk_snprintf(detail, sizeof detail, "%u %s", n, tr(kind_unit[k][n != 1]));
