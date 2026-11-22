@@ -132,6 +132,11 @@ Line numbers are from commit facf5b0b; check them again on current main.
       34cfa235), then passed 3 reruns in a row on 34cfa235. Cause
       unknown.
 
+- [ ] Fixup 0003 (Headphones' long names end before Playing) needs both
+      `headphone-picker` (the list) and `preset-name-ellipsis` (`NAME`
+      rows). When either lands upstream, rebase the other on it, move the
+      fix into that branch and delete the fixup.
+
 ## Cleanups (follow-ups from feature branches)
 
 - [ ] Branch coverage on new C at least upstream's (87.1% branches, 98.3%
