@@ -31,6 +31,8 @@ Personal tracking for work on kelp/q2-pod. This file lives on the orphan
       (`tools/lastfm_key.py`, changelog).
 - [x] Eject Card on the device (branch `eject-card`): stop playback and the card's background
       jobs, then unmount (the USB mode path already does the stops)
+      Tested on a Q2 2026-11-22 (integration 1f70b53b): "Safe to remove
+      the card", and the card mounted again when put back.
 - [ ] Roon, started and controlled from the Q2 (user's requirement, as the
       FiiO M21 does): Roon Extension API for browse/transport plus a local
       zone (squeezelite or AirPlay), in one app. Design: phase 1 remote + stock AirPlay zone (no
