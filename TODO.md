@@ -101,22 +101,20 @@ Line numbers are from commit facf5b0b; check them again on current main.
 
 ## Test hangs
 
-- [ ] `test/fw` has no per-test timeout, so a hung test spins forever.
-      Found 2026-11-21: 9 orphaned pytest-xdist workers in the q2-arm
-      VM ran at 100% CPU each for 8+ hours. They were in
-      `test_tidal.py`'s "starts the app and waits for it" tests, on
-      branches without `test-fw-arm64`'s clock mock (c00be9be). Cause:
-      `spot_exchange`'s `while (now_ms() < end)` loop reads the unmocked
-      `fw_clock_gettime`, which leaves the struct unset, so `end` never
-      comes (upstream-issues.md entry 2). The workers kept running after
-      their parent exited (ppid 1).
-      Proposed fix, not landed: an autouse fixture in
-      `test/fw/conftest.py` that calls
-      `faulthandler.dump_traceback_later(60, exit=True)` before each test
-      and `cancel_dump_traceback_later()` after. It is stdlib, and its
-      watchdog thread fires even while the test is in C. The worker
-      prints the stack and exits; `--max-worker-restart 0` then fails
-      the run instead of hanging it.
+- [ ] A timed-out `in_fork` test leaves its child running. Found
+      2026-11-21: 9 orphaned pytest-xdist workers in the q2-arm VM ran
+      at 100% CPU each for 8+ hours, in `test_tidal.py`'s "starts the
+      app and waits for it" tests, on branches without
+      `test-fw-arm64`'s clock mock (c00be9be). `spot_exchange`'s
+      `now_ms() < end` loop reads an unset clock (upstream-issues.md
+      entry 2). `pyproject.toml`'s `timeout = 60` (pytest-timeout,
+      signal method) fails the parent, but the forked child doesn't get
+      the alarm and spins on with ppid 1, holding the run's stdout open.
+      Fix on `test-fw-arm64` (3243fbfd, not pushed): the parent
+      kills the child when its wait raises. Checked with `--timeout 5`
+      on the old tree: 2 tests fail in 11.5 s and no process is left.
+      A faulthandler watchdog per test was dropped: it duplicates
+      pytest-timeout and races it at 60 s.
 
 ## Cleanups (follow-ups from feature branches)
 
