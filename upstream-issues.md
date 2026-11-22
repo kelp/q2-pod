@@ -81,7 +81,7 @@ Status: each one is draft, not filed. Each branch is on the fork
   files.
 - `test-patch-fpu-fr`: test/patch.py runs the FPU in FR=1.
 - `test-seam-timescale`: test/player_seam.py pins the M4A timescale.
-- `more-like-this`: More like this plays a mix of similar artists.
+- `more-like-this`: More Like This plays a mix of similar artists.
 - `listening-stats`: Listening Stats counts plays from the scrobble
   logs.
 - `opra-search`: Search OPRA finds a headphone's presets.

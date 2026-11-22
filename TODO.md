@@ -127,6 +127,11 @@ Line numbers are from commit facf5b0b; check them again on current main.
       (V018i vs V017i). Cause unknown. Matters for releases: a rebuild
       cannot show that a release's bytes match its sources.
 
+- [ ] `test/peq.py`'s `tidal_check` is flaky on sound: its host-built
+      `tidal_dl` died with SIGABRT in 2 of about 6 full checks (0d03cbc7,
+      34cfa235), then passed 3 reruns in a row on 34cfa235. Cause
+      unknown.
+
 ## Cleanups (follow-ups from feature branches)
 
 - [ ] Branch coverage on new C at least upstream's (87.1% branches, 98.3%
