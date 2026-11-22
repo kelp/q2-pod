@@ -656,7 +656,7 @@ static void e3_show(void);
 
 /* Headphones: Quick Settings' Playback hold opens the EQ page on the saved presets, one a
  * headphone. A pick plays at once, on the output that plays (EQ per Output files it there), and
- * closes the page; EQ settings goes on to the tab the page was on. */
+ * closes the page; EQ Settings goes on to the tab the page was on. */
 static int headphones_next, headphones_tab;
 void peq_headphones(void) {
     headphones_next = 1;
@@ -1083,7 +1083,7 @@ static int render(const void *unused) {
     } else if (ui.screen == HEADPHONES) {
         eq_state s;
         int off = !eq_load(&s) || !g_equalizer_flag || s.mode != EQ_PEQ;
-        row_dim(view, n++, tr("EQ settings"), 0, EQ_SETTINGS, INTO);
+        row_dim(view, n++, tr("EQ Settings"), 0, EQ_SETTINGS, INTO);
         row_dim(view, n++, tr("EQ Off"), off ? tr("Playing") : 0, EQ_NONE, 0);
         char said[sizeof ui.status]; /* a pick's or EQ Off's failure keeps the title */
         memcpy(said, ui.status, sizeof said);
