@@ -116,6 +116,13 @@ Line numbers are from commit facf5b0b; check them again on current main.
       A faulthandler watchdog per test was dropped: it duplicates
       pytest-timeout and races it at 60 s.
 
+- [ ] `--dev` builds are not byte-reproducible. Found 2026-11-22 on
+      sound: two builds of the same build inputs (same `source_sha256`,
+      `dist/dev-d2ccf5df2482`; integration 1f70b53b and 74b4cec4) differ
+      in 25,103 bytes of `release/bin/demo`, beyond the build-number tag
+      (V018i vs V017i). Cause unknown. Matters for releases: a rebuild
+      cannot show that a release's bytes match its sources.
+
 ## Cleanups (follow-ups from feature branches)
 
 - [ ] Branch coverage on new C at least upstream's (87.1% branches, 98.3%
