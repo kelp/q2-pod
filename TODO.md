@@ -27,6 +27,8 @@ Personal tracking for work on kelp/q2-pod. This file lives on the orphan
       `listening-stats`)
 - [x] "More like this" mix: Last.fm or ListenBrainz similar artists,
       matched against the local library (branch `more-like-this`)
+      Tested on a Q2 2026-11-22 (integration 1f70b53b): a mix of 50
+      songs played.
 - [x] Scrobbling: `SESSION_KEY=` for Last.fm. Done upstream
       (`tools/lastfm_key.py`, changelog).
 - [x] Eject Card on the device (branch `eject-card`): stop playback and the card's background
