@@ -680,7 +680,7 @@ static int qm_open(const void *unused) {
                                         N_("More…"),
                                         N_("New Playlist"),
                                         N_("Select Playlists…"),
-                                        N_("More like this") };
+                                        N_("More Like This") };
     char rated[128];
     /* stock sortselect row styles */
     int painted = own_hold(), pitch = painted ? theme()->page_row : QM_ROW;

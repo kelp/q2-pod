@@ -708,7 +708,7 @@ int shuffle_menu(void *ctx, event_t *event);
 int shuffle_play(void *all);
 int tidal_downloads(void *ctx, event_t *event);
 
-/* similar.c: Now Playing's More like this, and its request stopped for USB storage or keeping
+/* similar.c: Now Playing's More Like This, and its request stopped for USB storage or keeping
  * Smart Wi-Fi's radio on */
 int similar_click(void *ctx, event_t *event);
 void similar_stop(void);

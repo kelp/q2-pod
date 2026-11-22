@@ -8249,7 +8249,7 @@ int ringnav_folder_click(void *ctx, event_t *event) {
 /* usbmode_page_init, as a cable to a computer opens USB mode, before stock unmounts the card for
  * USB storage: the card apps, which write to it (downloads, uploads), end first, so nothing of
  * theirs keeps it busy (they run from /tmp: addon.c), as do Tidal's downloads (tidal.c), Download
- * Album Lyrics' job, playlist art's worker and the song durations' (durations.c); More like this's
+ * Album Lyrics' job, playlist art's worker and the song durations' (durations.c); More Like This's
  * request stops, so no mix of the card's songs plays (similar.c). */
 int ringnav_usbmode(void *a, void *b, void *c, void *d) {
     tidal_card_away();

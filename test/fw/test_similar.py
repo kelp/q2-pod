@@ -1,4 +1,4 @@
-"""patch/similar.c: More like this, Now Playing's hold menu row: Last.fm's similar artists (artist.getSimilar),
+"""patch/similar.c: More Like This, Now Playing's hold menu row: Last.fm's similar artists (artist.getSimilar),
 matched to the library's artists, and the mix of their songs it plays."""
 import ctypes as C
 import json

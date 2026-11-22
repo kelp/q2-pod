@@ -152,7 +152,7 @@ assert m.opened[-1][0]=='folder_page' and m.u.mem_read(syms['g_folder_layer'],1)
 assert m.open()==('/mnt/mmc',2); passed()
 # Now Playing: the playing song's row sits after Go to Artist, before the play modes.
 m=playing_menu(); m.dirs.add('/mnt/mmc/Music'); m.word(m.items(m.get(syms['mcl_pdeqplaylist']))[1]+O['REC_PATH'],m.string('/mnt/mmc/Music/B'))
-m.press(6000); assert m.hold()==11 and m.labels()==SONG_MENU[:2]+['View Queue']+SONG_MENU[2:]+['Go to Folder','More like this','Shuffle','Repeat','Group by: Album']
+m.press(6000); assert m.hold()==11 and m.labels()==SONG_MENU[:2]+['View Queue']+SONG_MENU[2:]+['Go to Folder','More Like This','Shuffle','Repeat','Group by: Album']
 passed()
 
 # Photos (patch/photos.c): the helpers first. Names: .jpg, .jpeg and .png, case aside, not hidden.

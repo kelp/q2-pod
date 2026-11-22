@@ -1566,7 +1566,7 @@ def song(recs, n, **kw):
 
 
 PLAYING_ROWS = ['Play Next', 'Add to Queue', 'View Queue', 'Add to Favourites', 'Add to Playlist', 'Go to Album',
-                'Go to Artist', 'More like this', 'Shuffle', 'Repeat', 'Group by: Album']
+                'Go to Artist', 'More Like This', 'Shuffle', 'Repeat', 'Group by: Album']
 
 
 def test_holding_play_on_now_playing_opens_its_menu(hold, recs, ui, st):
@@ -1612,7 +1612,7 @@ def test_an_untagged_song_has_no_go_to(hold, recs):
     hold.hold()
     rows = hold.menu()
     assert 'Go to Album' not in rows and 'Go to Artist' not in rows and hold.title() == '1'  # the name less its type
-    assert 'More like this' not in rows  # no artist to ask Last.fm about
+    assert 'More Like This' not in rows  # no artist to ask Last.fm about
 
 
 def test_more_like_this_asks_last_fm_for_the_playing_songs_artist(hold, recs, ui, fw):
@@ -1622,7 +1622,7 @@ def test_more_like_this_asks_last_fm_for_the_playing_songs_artist(hold, recs, ui
     fw.mock('toolsReadConfig', lambda path, section, key, *_: asked.append((cstr(path), cstr(section), cstr(key))))
     hold.hold()
     hold.menu()
-    hold.pick('More like this')
+    hold.pick('More Like This')
     assert hold.dialog not in ui.stack and ui.toasts == ['No Last.fm API key in .scrobble.ini']
     lastfm = [a for a in asked if a[1] == 'LASTFM']  # tr() reads the language first
     assert lastfm == [('/mnt/mmc/.scrobble.ini', 'LASTFM', 'API_KEY')] and not fw.calls('fw_pthread_create')

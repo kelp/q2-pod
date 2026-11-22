@@ -1,4 +1,4 @@
-/* More like this (docs/internals.md#more-like-this): a row of Now Playing's Play/Pause hold menu
+/* More Like This (docs/internals.md#more-like-this): a row of Now Playing's Play/Pause hold menu
  * asks Last.fm's artist.getSimilar for the playing song's artist, on a thread of its own, and plays
  * a shuffled mix of the library's songs by the similar artists it has, with a few by the artist.
  * The key is .scrobble.ini's [LASTFM] API_KEY; getSimilar needs no session or secret. */
