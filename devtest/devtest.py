@@ -472,7 +472,7 @@ def roon(r):
     s = q.shot('Roon')
     for row in ('Now Playing', 'Library', 'Search', 'Zones'):
         r.check(s.has(row), f'lists {row}', s)
-    log = q.out_of('tail -20 /mnt/mmc/.roon/log')
+    log = q.out_of('grep -E "discovery: found|status ready|paired" /mnt/mmc/.roon/log | tail -5')
     r.check('discovery: found' in log, 'discovery finds the core: ' +
             (re.findall(r'found .*', log) or ['-'])[-1])
     paired = 'status ready' in log or 'paired' in log or q.out_of('ls /mnt/mmc/.roon/roon.json 2>/dev/null')
@@ -485,7 +485,7 @@ def roon(r):
                          f'grep -E "VmRSS|Threads" /proc/{pid}/status; du -k /tmp/q2-roon.bin').split()
         share = (int(after[0]) + int(after[1]) - int(before[0]) - int(before[1])) / (float(after[2]) - float(before[2]))
         r.note(f'q2-roon: CPU {share:.2f}% of a core, RSS {after[4]} kB, {after[7]} threads, '
-               f'/tmp copy {after[9]} kB')
+               f'/tmp copy {after[8]} kB')
 
 
 # --- restore ---------------------------------------------------------------------------------------------
