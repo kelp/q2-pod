@@ -120,5 +120,5 @@ static int eject_click(void *ctx, event_t *event) {
 
 /* System settings' Eject Card row (navigation.c ringnav_systemset). */
 void eject_row(widget_t *view) {
-    widget_set_text_utf8(list_row(view, "system_update", eject_click, 0), tr("Eject Card"));
+    widget_set_text_utf8(list_row(view, "system_eject", eject_click, 0), tr("Eject Card"));
 }

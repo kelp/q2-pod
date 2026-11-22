@@ -81,7 +81,7 @@ def test_system_settings_has_eject_card_after_update(fw):
     found = titles(page.view)
     assert found[found.index('system_update') + 1:found.index('system_reset')] == ['Eject Card']
     image = [c for c in button_of(page.view, 'Eject Card').children if c.kind == 'image']
-    assert image[0].props['image'] == b'system_update'
+    assert image[0].props['image'] == b'system_eject'  # its own icon, not System Update's
 
 
 def test_eject_stops_every_card_job_then_syncs_unmounts_and_says_safe(fw):

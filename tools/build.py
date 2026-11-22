@@ -2464,6 +2464,7 @@ def build(zip_path, out, logo, dev=False, repo=REPO, stock_flac=False):  # pragm
         store='system_update.png').items()})
     icons['local_games.png'] = ('system_language.png', (ROOT/'assets/icons/local_games.png').read_bytes())
     icons['local_apps.png'] = ('system_language.png', (ROOT/'assets/icons/stream_app.png').read_bytes())  # 52 px, Library's Apps
+    icons['system_eject.png'] = ('system_update.png', row_icon((ROOT/'assets/icons/system_eject.png').read_bytes()))  # System's Eject Card, at SET_ICON
     # Minimal's selected Wi-Fi and Bluetooth rows draw this grey copy over stock's white delete mark
     icons['list_delete.png'] = ('navbar_delete.png', cat(xx+'navbar_delete.png'))
     for n in ('spotify', 'radio', 'app', 'config'):  # Streaming's Spotify, Internet Radio, card app and Configuration rows
