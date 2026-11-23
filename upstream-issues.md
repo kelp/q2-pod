@@ -94,3 +94,16 @@ Status: each one is draft, not filed. Each branch is on the fork
 - `mp3-toc-xing-offset`: mp3_toc finds Xing in both CRC layouts.
 - `test-fw-arm64`: test/fw runs on arm64 Linux. Includes entry 2.
 - `airplay-np`: a card app's Now Playing page. Needs `airplay-remote`.
+
+## 6. test/patch.py faults at Cover Flow's first paint with clang 19
+
+Status: draft, not filed. The fix is in `test-patch-fpu-fr` (aa84cac8).
+Seen on upstream/main 6b064c80 (2026-11-22) on sound, clang 19.
+
+The payload is built `-mfp64`, but `test/q2emu.py`'s Machine never sets
+CP0 Status CU1 and FR, so Unicorn runs the FPU in FR=0. clang 19 uses
+odd double registers (`sub.d $f1,$f1,$f24` and `ldc1 $f1` in
+`coverflow_position_offset`). In FR=0 these are reserved instructions,
+so `coverflow_position_paint` stops with `UC_ERR_EXCEPTION` and patch.py
+fails at `labels_edit`. `hci_emu.py` and `bt_resample.py` already set
+FR. The fix sets bits 26 and 29 of CP0 Status in Machine: two lines.
