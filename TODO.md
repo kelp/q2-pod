@@ -217,6 +217,13 @@ From a headless diagnosis on 2026-11-14; full report in sound's
 - Left to try, each a bigger change: column-major cover textures (column
   reads a texel 640 bytes from the last), or Cover Flow drawn in the
   panel's portrait layout so its area needs no rotate.
+- Column-major textures, benchmarked alone on the Q2: column()'s sampling
+  loop over a 7-cover frame takes 1.95 ms with today's rows and 1.18 ms
+  with columns, with the same instructions. That is about 7% of a
+  10.5 ms frame. COST cannot show it: it counts instructions, not cache
+  misses. The change touches cf_decode, the half cache's spread and make,
+  column, draw_quad, flip_render, landing, slant_render's bilerp and
+  test/coverflow.py's reference. Not started.
 - patch.py on upstream main faults in coverflow_position_paint with
   sound's clang 19 (odd double registers under the emulator's FR=0):
   branch test-patch-fpu-fr fixes it. Worth sending upstream.
