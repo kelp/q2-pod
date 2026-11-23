@@ -223,7 +223,11 @@ From a headless diagnosis on 2026-11-14; full report in sound's
   10.5 ms frame. COST cannot show it: it counts instructions, not cache
   misses. The change touches cf_decode, the half cache's spread and make,
   column, draw_quad, flip_render, landing, slant_render's bilerp and
-  test/coverflow.py's reference. Not started.
+  test/coverflow.py's reference. Done on coverflow-speed (468951e7):
+  every pinned frame hash unchanged, COST -2.6% to -3.4% on every Cover
+  Flow line, payload +208 bytes. Flash file on sound:
+  ~/code/q2-wt-cfcol/dist/dev-8a2b788d5751/update.tar. Waits for
+  Travis to flash and judge the speed before it goes on integration.
 - patch.py on upstream main faults in coverflow_position_paint with
   sound's clang 19 (odd double registers under the emulator's FR=0):
   branch test-patch-fpu-fr fixes it. Worth sending upstream.
