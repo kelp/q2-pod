@@ -195,7 +195,7 @@ def eq_import(r):
         q.tap_text(page, exact=True)
         time.sleep(1.5)
         s = q.shot(page)
-        t = s.find('DevTest Gamma')
+        t = s.find('Gamma')  # OCR sometimes reads 'Dev Test'
         r.check(t and t.text.rstrip().endswith(('...', '…')), f'{page}: the long name ends in an ellipsis', s)
         q.key('return')
         time.sleep(1)

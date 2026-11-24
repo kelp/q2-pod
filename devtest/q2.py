@@ -93,6 +93,7 @@ class Q2:
         self.remote('swipe', x1, y1, x2, y2, ms)
 
     def shot(self, label='shot', settle=True):
+        self.wake()  # a dark screen's shot is its last frame, not the page now open
         self.n += 1
         name = re.sub(r'[^a-z0-9]+', '-', label.lower()).strip('-')
         path = self.out / f'{self.n:03d}-{name}.png'
@@ -128,13 +129,24 @@ class Q2:
                 time.sleep(0.4)
         return None
 
+    @staticmethod
+    def is_home(s):
+        """Home's title, or its rows when OCR misreads the title ("Q2 Pod" as "podzo"); Return on Home
+        opens Now Playing, so a missed Home costs the page."""
+        title = s.find('Q2 Pod')
+        return bool(title and title.y < 30) or all(s.find(r, exact=True) for r in ('Library', 'Cover Flow',
+                                                                                     'Settings'))
+
     def home(self, tries=8):
         """Return until Home's title (the theme's "Q2 Pod") shows. Returns that screen, or None."""
         for _ in range(tries):
             s = self.shot('home?')
-            title = s.find('Q2 Pod')
-            if title and title.y < 30:
-                return s
+            if self.is_home(s):
+                time.sleep(0.8)  # a Return still on its way would open Now Playing from Home
+                s = self.shot('home')
+                if self.is_home(s):
+                    return s
+                continue
             self.key('return')
             time.sleep(0.6)
         return None
