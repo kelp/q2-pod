@@ -233,11 +233,12 @@ def headphone_picker(r):
     r.check(q.out_of('md5sum /mnt/data/peq-active') != active, 'the pick changes what plays (peq-active)')
     s = headphones(q)
     mark = [t for t in s.texts if t.text.strip() == 'Playing']
-    name = s.find('DevTest Gamma')
-    r.check(mark, 'the playing preset is marked Playing', s)
-    clear = name and all(name.x + name.w < m.x or abs(m.y - name.y) > 10 for m in mark)
-    r.check(clear and name.text.rstrip().endswith(('...', '…')),
-            'the long name ends in an ellipsis before the Playing mark', s)
+    name = s.find('Gamma')
+    merged = name and name.text.rstrip().endswith(' Playing')  # OCR can read the name and mark as one run
+    r.check(mark or merged, 'the playing preset is marked Playing', s)
+    text = name.text.rstrip()[:-len(' Playing')].rstrip() if merged else name and name.text.rstrip()
+    clear = name and (merged or all(name.x + name.w < m.x or abs(m.y - name.y) > 10 for m in mark))
+    r.check(clear and text.endswith(('...', '…')), 'the long name ends in an ellipsis before the Playing mark', s)
     q.key('return')
     time.sleep(1)
 
