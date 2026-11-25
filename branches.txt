@@ -17,3 +17,4 @@ peq-band-enable-keeps-channel
 mp3-toc-xing-offset
 test-fw-arm64
 airplay-np
+coverflow-speed

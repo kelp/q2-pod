@@ -1,0 +1,35 @@
+From 7f2f8f8b20574efbf6eeb30a1ee1e4b2308a896b Mon Sep 17 00:00:00 2001
+From: Travis Cole <11240+kelp@users.noreply.github.com>
+Date: Sun, 22 Nov 2026 10:57:29 -0800
+Subject: [PATCH] changelog: one Headphones line, with EQ Settings
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01DaXZzN3FY6RrXiA6e34J2b
+---
+ docs/changelog.md | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/docs/changelog.md b/docs/changelog.md
+index d1bda1bb..41ed371e 100644
+--- a/docs/changelog.md
++++ b/docs/changelog.md
+@@ -9,7 +9,7 @@
+   - Apps: a card app can set the EQ, as the EQ page's **Apply** does, turn it off and on, and read what plays, so an app on your phone can tune the EQ while you listen.
+   - Streaming: after the App Store installs or removes an app, each card app's row on the Streaming page and on Home's Streaming list still opens the app it names. A row on a list open since before the change could open the app next to it, or nothing.
+   - EQ: **Presets → Import from SD /EQ** has **Import all**, which imports every preset file on the card at once. A preset already saved under the same name stays as it is, and the title says how many were imported, kept and failed.
+-  - EQ: holding **Playback** in Quick Settings opens **Headphones**, a list of your saved presets with the one playing marked. Picking one plays it at once and closes the list; with EQ per Output on, that output keeps it. **EQ Off** turns the EQ off, and **EQ settings** opens the EQ page as the hold did before.
++  - EQ: holding **Playback** in Quick Settings opens **Headphones**, a list of your saved presets with the one playing marked. Picking one plays it at once and closes the list; with EQ per Output on, that output keeps it. **EQ Off** turns the EQ off, and **EQ Settings** opens the EQ page as the hold did before.
+   - EQ: **Import from SD /EQ** no longer lists the `._` files that a Mac writes beside your presets on the card. They are not presets and failed to import.
+   - Now Playing: **More Like This**, in Play/Pause's hold menu, plays up to 50 songs from your library by artists Last.fm finds similar to the playing song's artist, with a few by that artist, shuffled. It needs Wi-Fi and a Last.fm API key in `.scrobble.ini` (`[LASTFM]`, `API_KEY=`), but no Last.fm account.
+   - Library: **Listening Stats**, under Most Played, shows your time played and your 25 top artists, albums and songs for this week, this month, this year and all time. It counts the listens logged on the card for scrobbling, uploaded or not, so it works without an account.
+@@ -21,7 +21,6 @@
+   - EQ: a band set to **Left** or **Right** stays on that channel when you turn its **Band** switch off and on again. It went back to **Both**.
+   - Playback: seeking in a variable-bitrate MP3 that LAME made with CRC protection now goes to the right place, as in other VBR MP3s. The Q2 missed its seek table, so a seek could land away from the time you picked.
+   - AirPlay: while a card app such as a Roon app sends music to the Q2 over AirPlay, the Q2 shows its own Now Playing page with the cover, the title, artist and album, and a moving progress bar, in place of stock's AirPlay page.
+-  - EQ: holding **Playback** in Quick Settings opens **Headphones**, a list of your saved presets with the one playing marked. Picking one plays it at once and closes the list; with EQ per Output on, that output keeps it. **EQ Off** turns the EQ off, and **EQ Settings** opens the EQ page as the hold did before.
+ - **1.8.9**:
+   - Now Playing: the **AirPlay** row at the top of **⋯** shows only once AirPlay is installed from the App Store. It used to show for everyone, and without the app a press only said where to install it.
+   - Display: every change on the screen takes less of the processor on its way to the panel, so Cover Flow's covers, lists and page slides each draw with less work.
+-- 
+2.56.1
+
