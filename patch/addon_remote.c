@@ -8,8 +8,8 @@
  * never waits. The verbs: playpause (the Q2's Play/Pause, a headset's Play/Pause), next, previous,
  * play (a headset's Play, an AirPod back in) and pause (a headset's Pause or Stop, an AirPod out,
  * the link dropping, a sleep timer: media_set_playing). Its reply is not waited for: a refusal's
- * message is toasted later, on the UI loop (addon_remote_poll). q2-roon controls a Roon core this
- * way while the core plays to the Q2 over AirPlay: shairport 1.1.1 has no DACP to send the keys
+ * message is toasted later, on the UI loop (addon_remote_poll). An app can control a server this
+ * way while the server plays to the Q2 over AirPlay: shairport 1.1.1 has no DACP to send the keys
  * back. The app found is kept for REMOTE_LOOK_MS (headset_ears asks every 100 ms with both buds
  * out), so an app that starts or quits is seen up to that late. With two such apps running, the
  * first the card lists takes the keys. */
