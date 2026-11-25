@@ -1,0 +1,29 @@
+From 93282a37a603730ec304feab122fbb7a07c0f3c8 Mon Sep 17 00:00:00 2001
+From: Travis Cole <11240+kelp@users.noreply.github.com>
+Date: Tue, 24 Nov 2026 20:17:12 -0800
+Subject: [PATCH] home: Listening Stats' row as clang-format wraps it
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01DaXZzN3FY6RrXiA6e34J2b
+---
+ patch/home.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/patch/home.c b/patch/home.c
+index 678db140..0a315b79 100644
+--- a/patch/home.c
++++ b/patch/home.c
+@@ -92,8 +92,8 @@ int ringnav_localmusic(widget_t *win, void *ctx) {
+                    n++);
+     widget_set_visible(stock[L_FREQUENT], 0, 0); /* Most Played is its list, from every listen */
+     widget_restack(stock[L_FREQUENT], n++);
+-    widget_restack(
+-        library_row(view, "local_stats", listening_stats, 0, tr("Listening Stats"), 1), n++);
++    widget_restack(library_row(view, "local_stats", listening_stats, 0, tr("Listening Stats"), 1),
++                   n++);
+     if (pod_value(POD_HIDE_HIRES)) widget_set_visible(stock[L_HIRES], 0, 0); /* kept, as My Fav */
+     widget_restack(stock[L_HIRES], n++);
+     widget_restack(library_row(view, "local_longsongs", long_songs, 0, tr("Long Songs"), 1), n++);
+-- 
+2.56.1
+

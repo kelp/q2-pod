@@ -1,0 +1,48 @@
+From 2094ca6a8f6fc05b28fc5ca68390274837e45335 Mon Sep 17 00:00:00 2001
+From: Travis Cole <11240+kelp@users.noreply.github.com>
+Date: Tue, 24 Nov 2026 20:07:40 -0800
+Subject: [PATCH] test: More Like This and Listening Stats count their own
+ calls
+
+upstream's tr() reads the language from config.ini and its theme
+file, so the tests count only the Last.fm key read and the scrobble
+logs' opens.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01DaXZzN3FY6RrXiA6e34J2b
+---
+ test/fw/test_listening_stats.py | 3 ++-
+ test/fw/test_nav_hold.py        | 3 ++-
+ 2 files changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/test/fw/test_listening_stats.py b/test/fw/test_listening_stats.py
+index 57211cf8..e6f23f17 100644
+--- a/test/fw/test_listening_stats.py
++++ b/test/fw/test_listening_stats.py
+@@ -299,7 +299,8 @@ def test_closing_while_counting_stops_the_worker_before_its_next_read(fw):
+     fw.mock('fw_pthread_join', lambda *_: worker(s.threads[-1][0])(s.threads[-1][1]) and 0)
+     call(fw, 'listening_stats')
+     s.back()
+-    assert not fw.calls('fw_fread') and len(fw.calls('fw_fopen')) == 2 and len(fw.calls('fw_fclose')) == 2
++    logs = [a for _, a in fw.calls('fw_fopen') if C.string_at(a[0]).startswith(b'/mnt/mmc/.scrobbler.log')]
++    assert not fw.calls('fw_fread') and len(logs) == 2 and len(fw.calls('fw_fclose')) == 2
+ 
+ 
+ def test_closing_after_the_count_joins_its_thread_once(fw):
+diff --git a/test/fw/test_nav_hold.py b/test/fw/test_nav_hold.py
+index c257c4d9..24299a5d 100644
+--- a/test/fw/test_nav_hold.py
++++ b/test/fw/test_nav_hold.py
+@@ -1622,7 +1622,8 @@ def test_more_like_this_asks_last_fm_for_the_playing_songs_artist(hold, recs, ui
+     hold.menu()
+     hold.pick('More Like This')
+     assert hold.dialog not in ui.stack and ui.toasts == ['No Last.fm API key in .scrobble.ini']
+-    assert asked == [('/mnt/mmc/.scrobble.ini', 'LASTFM', 'API_KEY')] and not fw.calls('fw_pthread_create')
++    lastfm = [a for a in asked if a[1] == 'LASTFM']  # tr() reads the language first
++    assert lastfm == [('/mnt/mmc/.scrobble.ini', 'LASTFM', 'API_KEY')] and not fw.calls('fw_pthread_create')
+ 
+ 
+ def test_now_playing_offers_a_books_chapters(hold, recs, ui):
+-- 
+2.56.1
+

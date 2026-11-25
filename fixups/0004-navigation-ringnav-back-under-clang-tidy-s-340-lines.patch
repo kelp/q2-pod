@@ -1,0 +1,31 @@
+From d500f3b2f627ba04db44f3059d2a8a1c8103c1a8 Mon Sep 17 00:00:00 2001
+From: Travis Cole <11240+kelp@users.noreply.github.com>
+Date: Tue, 24 Nov 2026 20:12:22 -0800
+Subject: [PATCH] navigation: ringnav back under clang-tidy's 340 lines
+
+upstream's ringnav grew to the limit, and airplay-remote's key hook
+adds two lines, so its comment goes on the line it explains.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01DaXZzN3FY6RrXiA6e34J2b
+---
+ patch/navigation.c | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/patch/navigation.c b/patch/navigation.c
+index 4fc3ea41..25d99ece 100644
+--- a/patch/navigation.c
++++ b/patch/navigation.c
+@@ -9653,8 +9653,7 @@ int ringnav(void *ctx, event_t *event) {
+         media_key(key);
+         return STOP;
+     }
+-    /* AirPlay's, which stock drops (on_wm_keyup_fun): a card app's that asks (addon_remote.c) */
+-    if (!result && addon_remote_key(key)) return STOP;
++    if (!result && addon_remote_key(key)) return STOP; /* AirPlay keys to a card app */
+     if (result) {
+         cancel_center();
+         if (key == KEY_PREV || key == KEY_NEXT) drop_wheel();
+-- 
+2.56.1
+

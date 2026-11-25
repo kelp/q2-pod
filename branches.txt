@@ -1,20 +1,22 @@
 # Feature branches merged into `integration`, in order.
 # Each branch starts from upstream/main and becomes one upstream PR.
-payload-room
-peq-import-all
 headphone-picker
-eq-import-skip-appledouble
 test-patch-fpu-fr
-test-seam-timescale
 more-like-this
 listening-stats
 opra-search
 eject-card
 airplay-remote
-preset-name-ellipsis
-shelf-remove-dotdot
-peq-band-enable-keeps-channel
-mp3-toc-xing-offset
 test-fw-arm64
 airplay-np
-coverflow-speed
+
+# Upstream has its own version of these (2026-11-24), so they are not merged:
+#   payload-room: upstream 9d8c7ac1 (scratch at 0xbf0000, 960 KB)
+#   peq-import-all: upstream c3c9d7b1
+#   eq-import-skip-appledouble: upstream 9f33d720
+#   test-seam-timescale: upstream d937f3aa
+#   preset-name-ellipsis: upstream 481abc44
+#   shelf-remove-dotdot: upstream 6364f1e0
+#   peq-band-enable-keeps-channel: upstream 41e608ef
+#   mp3-toc-xing-offset: upstream 3451624e
+#   coverflow-speed: upstream 2bcee01f
