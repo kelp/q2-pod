@@ -228,8 +228,25 @@ From a headless diagnosis on 2026-11-14; full report in sound's
   Flow line, payload +208 bytes. Flash file on sound:
   ~/code/q2-wt-cfcol/dist/dev-8a2b788d5751/update.tar (upstream main
   plus the commit). With integration 7f2f8f8b's features:
-  ~/code/q2-wt-cfint/dist/dev-518af731dc33/update.tar. Waits for
-  Travis to flash and judge the speed before it goes on integration.
+  ~/code/q2-wt-cfint/dist/dev-518af731dc33/update.tar. Travis judged
+  it faster; upstream took it as 2bcee01f, so the branch is not merged.
+- demo's CPU over a fixed scroll (30 wheel ticks down and back, 3 runs,
+  devtest/cfbench.sh): old integration 1187 ticks, with column textures
+  1057 (fresh boot) and 1059 (3 h up), integration on upstream fcc64611
+  1013 (2026-11-24). About 15% less in all.
+- Portrait-native Cover Flow, benchmarked alone on the Q2 for the
+  375 x 220 view: draw 1.00 + copy 0.32 + rotate 0.97 = 2.29 ms today,
+  draw 1.03 + row copy 0.38 = 1.41 ms portrait. 0.9 ms, about 10% of a
+  scrolling frame, and the frame already costs about 9 ms of 16.7.
+  Not done: the handoff to the flush thread, two pages, slide
+  snapshots, overlays and Night Shift make it a large change for CPU
+  headroom only. Frame pacing, not CPU, keeps it near 57 fps.
+- At rest (2026-11-24, both cores): screen off 0.4%, Home 1.1%, Cover
+  Flow 0.7%, Now Playing 2.8%, playing with the EQ 3.8%. Night Shift's
+  tint (night_end) is about 7% of a scrolling frame. The kernel's
+  aic_dma_notice wakes 100 times a second with nothing playing and
+  holds the load average at 1.0. The battery reports no current, so
+  power is not measurable.
 - patch.py on upstream main faults in coverflow_position_paint with
   sound's clang 19 (odd double registers under the emulator's FR=0):
   branch test-patch-fpu-fr fixes it. Worth sending upstream.
