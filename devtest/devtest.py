@@ -56,7 +56,10 @@ def demo_pid(q):
 
 @test
 def payload(r):
-    """payload-room: demo runs with the payload and its .scratch above it (0xbe0000), and stays up."""
+    """demo runs with the payload and its .scratch above it, and stays up. SCRATCH is tools/build.py's
+    (upstream's 0xbf0000 since 9d8c7ac1); SCRATCH_END is __scratch_end in the build's patch.elf
+    (dev-7b6f600d8259's), so a build whose state is larger checks only up to here."""
+    SCRATCH, SCRATCH_END = 0xbf0000, 0xc1e798
     q = r.q2
     pid = demo_pid(q)
     r.check(pid and pid.isdigit(), f'demo is running (pid {pid})')
@@ -64,9 +67,9 @@ def payload(r):
     spans = [tuple(int(x, 16) for x in m) for m in re.findall(r'^([0-9a-f]+)-([0-9a-f]+) ', maps, re.M)]
     payload = [s for s in spans if s[0] <= 0xb00000 < s[1]]
     r.check(payload, 'a mapping holds the payload at 0xb00000')
-    covered = any(a <= 0xbe0000 and b >= 0xc08444 for a, b in spans) or \
-        (payload and max(b for a, b in spans if a < 0xc08444 and b > 0xbe0000) >= 0xc08444)
-    r.check(covered, '.scratch (0xbe0000-0xc08444) is mapped')
+    covered = any(a <= SCRATCH and b >= SCRATCH_END for a, b in spans) or \
+        (payload and max(b for a, b in spans if a < SCRATCH_END and b > SCRATCH) >= SCRATCH_END)
+    r.check(covered, f'.scratch ({SCRATCH:#x}-{SCRATCH_END:#x}) is mapped')
 
 
 # --- card apps -------------------------------------------------------------------------------------------
