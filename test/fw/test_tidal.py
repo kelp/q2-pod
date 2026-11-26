@@ -9,7 +9,7 @@ import re
 import pytest
 
 import host
-from conftest import O, Deques, Files, Game, claim, dir_readdir, high_halves, in_fork, libc, stock_stub
+from conftest import O, Deques, Files, Game, claim, dir_readdir, high_halves, in_fork, jump, libc, stock_stub
 from test_radio import Rd, Sp  # test_radio.py keeps the mirror
 from test_streaming import Td
 
@@ -373,17 +373,17 @@ class Au(C.Structure):
 
 
 def free_stubbed(play):
-    """play(), with toolsFreeStSongInfo, called at its stock address (tidal.c's own define), a ret meanwhile: each
-    record's strings stay for the asserts; the byte is put back after, as conftest's map outlives a load."""
+    """play(), with toolsFreeStSongInfo, called at its stock address (tidal.c's own define), a stand-in that only
+    returns meanwhile: each record's strings stay for the asserts; its bytes go back after, as conftest's map
+    outlives a load."""
     free_rec = int(re.findall(r'toolsFreeStSongInfo \(\(void \(\*\)\(void \*\)\)(0x[0-9a-f]+)u\)',
                               (host.ROOT/'patch/tidal.c').read_text())[0], 16)
     claim(free_rec)
-    saved = C.string_at(free_rec, 1)
-    C.memmove(free_rec, b'\xc3', 1)
+    saved = jump(free_rec, lambda *_: 0)
     try:
         return play()
     finally:
-        C.memmove(free_rec, saved, 1)
+        C.memmove(free_rec, saved, len(saved))
 
 
 def urls_play(fw, files, lines, path='/tmp/q2-a.urls', header=b'#Q2URLS/1'):
@@ -641,17 +641,16 @@ def test_a_url_queue_takes_web_urls_and_card_paths_alone(fw):
         covers.append(C.string_at(cover) if cover else b'')
         deques[q].append(rec)
     fw.mock('fw__deque_push_back', push)
-    # toolsFreeStSongInfo is called at its stock address (tidal.c's own define): a ret there for the test, so each
-    # record's strings stay for the asserts; the byte is put back after, as conftest's map outlives a load
+    # toolsFreeStSongInfo is called at its stock address (tidal.c's own define): a stand-in that only returns, so
+    # each record's strings stay for the asserts; its bytes go back after, as conftest's map outlives a load
     free_rec = int(re.findall(r'toolsFreeStSongInfo \(\(void \(\*\)\(void \*\)\)(0x[0-9a-f]+)u\)',
                               (host.ROOT/'patch/tidal.c').read_text())[0], 16)
     claim(free_rec)
-    saved = C.string_at(free_rec, 1)
-    C.memmove(free_rec, b'\xc3', 1)
+    saved = jump(free_rec, lambda *_: 0)
     try:
         assert fw.fn('app_urls_play', C.c_int, C.c_char_p)(b'/tmp/q2-a.urls') == 1
     finally:
-        C.memmove(free_rec, saved, 1)
+        C.memmove(free_rec, saved, len(saved))
     au = fw.var('tidal__au', Au)
     assert au.n == 3 and [au.urls[i] for i in range(3)] == [b'https://x/a.flac', None, b'https://x/f.flac']
     assert covers == [b'', b'https://x/e.jpg', b'']
@@ -1152,8 +1151,8 @@ def test_nothing_is_asked_while_stock_sets_up_a_song_to_play(fw, queue, mcl):
 
 def test_a_card_app_s_song_starting_drops_download_all_s_fetch_too(fw, queue, mcl):
     """A card app's song clears Download All's flag as a stock song's does, so its fetch's answer is dropped
-    (curl_stop_httpget, at its stock address, tidal.c's own define, a ret meanwhile should it be called: the byte put
-    back after, as conftest's map outlives a load)."""
+    (curl_stop_httpget, at its stock address, tidal.c's own define, a stand-in that only returns meanwhile should it
+    be called: its bytes put back after, as conftest's map outlives a load)."""
     card = Card(fw)
     a = All(fw, queue, mcl, card, ['11'])
     a.row(press=1)
@@ -1163,12 +1162,11 @@ def test_a_card_app_s_song_starting_drops_download_all_s_fetch_too(fw, queue, mc
     mcl.pos, a.net = 0, 0  # offline: app_track gives up once the fetch is dropped
     stop = int(re.findall(r'curl_stop_httpget \(\(int \(\*\)\(void\)\)(0x[0-9a-f]+)u\)', (host.ROOT/'patch/tidal.c').read_text())[0], 16)
     claim(stop)
-    saved = C.string_at(stop, 1)
-    C.memmove(stop, b'\xc3', 1)
+    saved = jump(stop, lambda *_: 0)
     try:
         a.play_asked()
     finally:
-        C.memmove(stop, saved, 1)
+        C.memmove(stop, saved, len(saved))
     assert a.flag.value == 0 and a.t.td.dropped == 1 and a.t.td.starting == 0
     assert a.answer('', '11') == 1 and a.t.td.asked == b'' and a.t.td.tried == 0  # its answer: not a song passed
     a.net = 1

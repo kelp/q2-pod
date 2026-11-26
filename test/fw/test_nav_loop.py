@@ -10,7 +10,7 @@ import struct
 import pytest
 
 import host
-from conftest import NAVIGATION_SOURCE, O, Config, Deques, Files, Game, claim, libc
+from conftest import NAVIGATION_SOURCE, O, Config, Deques, Files, Game, claim, jump, libc
 
 KEY_CENTER, KEY_PREV, KEY_NEXT, KEY_PLAY, KEY_RETURN = (O[k] for k in ('KEY_CENTER', 'KEY_PREV', 'KEY_NEXT', 'KEY_PLAY', 'KEY_RETURN'))
 KEY_BACK_BTN, KEY_FWD_BTN = O['KEY_BACK_BTN'], O['KEY_FWD_BTN']
@@ -1296,15 +1296,15 @@ NP_UPDATE = 0x53cf08  # Now Playing's update: (window, force); the title, artist
 
 class NowPlayingFront:
     """Now Playing in front, lit, its page 0x5100; stock's update at its address
-    is an x86-64 jump to a Python stand-in, and it and the window manager's paint log what ran, in order.
+    is a jump to a Python stand-in (conftest.jump), and it and the window manager's paint log what ran, in order.
     The song is the title in g_song_name, which the update draws."""
     UPDATE = C.CFUNCTYPE(C.c_int, C.c_void_p, C.c_int)
 
     def __init__(self, fw, st):
-        self.st, self.log, self.saved = st, [], C.string_at(NP_UPDATE, 12)
+        self.st, self.log = st, []
         self.update = self.UPDATE(lambda win, force: self.log.append(('update', win, force)) or 0)
         claim(NP_UPDATE)
-        C.memmove(NP_UPDATE, b'\x48\xb8' + struct.pack('<Q', C.cast(self.update, C.c_void_p).value) + b'\xff\xe0', 12)
+        self.saved = jump(NP_UPDATE, C.cast(self.update, C.c_void_p).value)
         self.lit = fw.var('g_backlight_status', C.c_ubyte)
         self.lit.value = 1
         st('np_win', C.c_void_p).value = 0x5100
@@ -1324,7 +1324,7 @@ class NowPlayingFront:
         return self.log[:]
 
     def close(self):
-        C.memmove(NP_UPDATE, self.saved, 12)
+        C.memmove(NP_UPDATE, self.saved, len(self.saved))
         assert not libc.mprotect(NP_UPDATE & ~0xfff, 0x2000, 3)
 
 

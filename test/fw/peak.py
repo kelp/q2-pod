@@ -39,7 +39,7 @@ class Arena:
     before. Placed from the last string back, each at its block's next free byte, which names the block the string
     before goes in; a full block starts the record again elsewhere."""
     def __init__(self):
-        self.rec = libc.mmap(0, 64 << 20, 3, 0x62, -1, 0)  # MAP_PRIVATE | MAP_ANONYMOUS | MAP_32BIT
+        self.rec = conftest.low_map(64 << 20)
         assert 0 < self.rec < 1 << 31
         for b in range(B0, B0 + NB):
             assert libc.mmap(b << 32 | B0, NB, 3, e2e.FIXED, -1, 0) == b << 32 | B0, hex(b)

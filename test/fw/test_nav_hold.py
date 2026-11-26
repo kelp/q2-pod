@@ -10,7 +10,7 @@ import pytest
 
 import host
 import test_nav_loop as NL  # Now Playing's update (NP_UPDATE) and the window manager's paint (Wm)
-from conftest import O, Deques, Files, Rows, claim, favdir_card, fnv1a, high_halves, in_fork, libc, ui_name
+from conftest import O, Deques, Files, Rows, claim, favdir_card, fnv1a, high_halves, in_fork, jump, libc, ui_name
 from test_nav_display_library import Ple  # playlists.c's editor state
 from test_navigation import directory
 from test_coverflow import Cf  # coverflow.c's state
@@ -965,12 +965,13 @@ STAND_IN_LOGS = []  # each stand-in's log: its code writes there at every call, 
 
 # Stock code at a fixed address, for a handler the C calls there. Only ever in a fork.
 def stock_handler(address, result=0):
-    """x86-64 at address: its first two arguments and the event's x (rsi + EVENT_X) logged, result returned."""
+    """A stand-in at address: its first two arguments and the event's x (the second's EVENT_X) logged, result returned."""
     log = (C.c_long * 3)()
     claim(address)
-    code = (b'\x48\xb8' + struct.pack('<Q', C.addressof(log)) + bytes.fromhex('488938 48897008') +
-            b'\x8b\x4e' + bytes([EVENT_X]) + bytes.fromhex('48894810') + b'\xb8' + struct.pack('<I', result) + b'\xc3')
-    C.memmove(address, code, len(code))
+    def run(a0, a1, *_):
+        log[0], log[1], log[2] = a0, a1, C.c_uint.from_address(a1 + EVENT_X).value
+        return result
+    jump(address, run)
     STAND_IN_LOGS.append(log)
     return log
 
@@ -1682,9 +1683,8 @@ def test_now_playings_heart_is_drawn_after_a_favourite_from_its_menu(hold, recs,
     fw.var('g_backlight_status', C.c_ubyte).value = 1
     forced = []
     update = NL.NowPlayingFront.UPDATE(lambda win, force: forced.append(force) or 0)
-    saved = C.string_at(NL.NP_UPDATE, 12)
     claim(NL.NP_UPDATE)
-    C.memmove(NL.NP_UPDATE, b'\x48\xb8' + struct.pack('<Q', C.cast(update, C.c_void_p).value) + b'\xff\xe0', 12)
+    saved = jump(NL.NP_UPDATE, C.cast(update, C.c_void_p).value)
     try:
         wm = NL.Wm(fw)
         wm.call(wm.p)  # the page as it opened: its song drawn
@@ -1697,7 +1697,7 @@ def test_now_playings_heart_is_drawn_after_a_favourite_from_its_menu(hold, recs,
         wm.call(wm.p)
         assert forced == [1]
     finally:
-        C.memmove(NL.NP_UPDATE, saved, 12)
+        C.memmove(NL.NP_UPDATE, saved, len(saved))
         assert not NL.libc.mprotect(NL.NP_UPDATE & ~0xfff, 0x2000, 3)
 
 
