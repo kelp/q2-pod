@@ -714,6 +714,9 @@ int similar_click(void *ctx, event_t *event);
 void similar_stop(void);
 int similar_busy(void);
 
+/* listening_stats.c */
+int listening_stats(void *ctx, event_t *event);
+
 /* tags.c */
 int scan_quote(char *sql, unsigned cap, unsigned *n, const char *s);
 

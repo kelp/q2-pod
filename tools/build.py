@@ -1856,7 +1856,8 @@ CONTEXT_DATA = {'bt_showcoding': 4, 'g_memory_info': 3476, 'g_folder_path': 1024
 # Windows the payload creates at runtime (window_create), so no rootfs asset names them.
 PAYLOAD_WINDOWS = {'playlistedit_page', 'chapters_page', 'coverflow_page', 'photos_page', 'games_page', 'cardapps_page', 'mostplayed_page', 'shuffle_page', 'upnext_page', 'ratings_page', 'era_page', 'era_albums_page', 'rated_page', 'longsongs_page', 'spotify_page',
                    'spotbrowse_page', 'radio_page', 'radionp_page', 'streamconf_page', 'tidal_downloads', 'apps_page',
-                   'addon_page', 'app_songs', 'qrcode_page', 'battery_page'}
+                   'addon_page', 'app_songs', 'qrcode_page', 'battery_page',
+                   'stats_page', 'stats_period_page', 'stats_top_page'}
 ICONS = [f'menu_{c}{s}.png' for c in ('coverflow', 'rockbox') for s in ('', 'down')]
 # The stock EQ preset page and the images only it and the stock equalizer page show: the PEQ
 # editor clears that page's widgets on init and never binds the preset button, so none can load.
@@ -1891,7 +1892,7 @@ FLAGS = ['--target=mipsel-linux-gnu','-march=mips32r2','-mabi=32','-mfp64',
          '-Wshadow','-Wimplicit-int-conversion','-Wconditional-uninitialized','-Wmissing-variable-declarations',
          '-Wvla','-Wundef']
 # navigation.c and the files split out of it (patch/navigation.h), each its own object, linked in this order.
-NAVIGATION = ['navigation.c', 'theme_engine.c', 'playlists.c', 'classic_pages.c', 'home.c', 'np_bar.c', 'volume.c', 'smart_wifi.c', 'system.c', 'usb_charge.c', 'tags.c', 'scrobble_ui.c', 'library_lists.c', 'durations.c', 'script.c', 'coverflow_position.c', 'ratings.c', 'scan_folders.c', 'folder_delete.c', 'battery.c', 'np_lyrics.c', 'quick_settings.c', 'flat.c', 'clock.c', 'queue_menu.c', 'np_marks.c', 'rotate.c', 'netservice.c', 'addon_bar.c', 'side_seek.c', 'language.c', 'bidi_text.c', 'card_theme.c', 'card_rules.c', 'sleep_row.c', 'samplerate.c', 'shortcut_pick.c', 'name_sort.c', 'window_split.c', 'similar.c']
+NAVIGATION = ['navigation.c', 'theme_engine.c', 'playlists.c', 'classic_pages.c', 'home.c', 'np_bar.c', 'volume.c', 'smart_wifi.c', 'system.c', 'usb_charge.c', 'tags.c', 'scrobble_ui.c', 'library_lists.c', 'durations.c', 'script.c', 'coverflow_position.c', 'ratings.c', 'scan_folders.c', 'folder_delete.c', 'battery.c', 'np_lyrics.c', 'quick_settings.c', 'flat.c', 'clock.c', 'queue_menu.c', 'np_marks.c', 'rotate.c', 'netservice.c', 'addon_bar.c', 'side_seek.c', 'language.c', 'bidi_text.c', 'card_theme.c', 'card_rules.c', 'sleep_row.c', 'samplerate.c', 'shortcut_pick.c', 'name_sort.c', 'window_split.c', 'similar.c', 'listening_stats.c']
 
 def compile_payload(out):  # pragma: no mutate block
     """Compile and link the payload."""
@@ -2461,7 +2462,7 @@ def build(zip_path, out, logo, dev=False, repo=REPO, stock_flac=False):  # pragm
         shuffle='playset_playmode.png', scrobble='wifiset_wifi.png', podcasts='netservice_dlna.png',
         audiobooks='playset_foldercover.png', photos='playset_covermode.png',
         longsongs='system_time.png', era='local_genre.png',
-        store='system_update.png').items()})
+        store='system_update.png', stats='playset_gain.png').items()})
     icons['local_games.png'] = ('system_language.png', (ROOT/'assets/icons/local_games.png').read_bytes())
     icons['local_apps.png'] = ('system_language.png', (ROOT/'assets/icons/stream_app.png').read_bytes())  # 52 px, Library's Apps
     # Minimal's selected Wi-Fi and Bluetooth rows draw this grey copy over stock's white delete mark

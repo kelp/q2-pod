@@ -8,7 +8,7 @@ m=ShuffleMachine(); m.card=[('Music',4),('PODCASTS',4),('Audiobooks',8)]
 m.handlers[int(manifest['patch_symbols']['stock_folder_trampoline'],16)]='stock_folder'
 m.handlers[int(manifest['patch_symbols']['stock_folder_back_trampoline'],16)]='stock_folder_back'
 view=m.node('scroll_view','scroll_view_localmusic',[m.node('list_item') for _ in range(11)]); m.top=m.node('window','localmusic_page',[view])
-assert m.call(address=HOOKS['localmusic_page_init'][0],args=(m.top,5,0,0),gap=0)==0 and len(m.nodes[view]['children'])==20
+assert m.call(address=HOOKS['localmusic_page_init'][0],args=(m.top,5,0,0),gap=0)==0 and len(m.nodes[view]['children'])==21
 button=m.nodes[m.nodes[view]['children'][-5]]['children'][0]; icon,label,into=m.nodes[button]['children']
 assert m.nodes[icon]['image']=='local_podcasts' and m.nodes[label]['text']=='Podcasts' and not m.nodes[button].get('name')
 f,ctx=m.handler(button,O['EVT_CLICK']); m.calls=[]

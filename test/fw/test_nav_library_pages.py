@@ -2423,7 +2423,7 @@ def test_the_library_s_rows_in_their_order(fw, ui, st, theme, lead):
     # hidden with no app for it
     assert page_rows(ui, view) == [(c, c not in ('My Fav', 'Frequent', 'Apps')) for c in lead + [
         'Shuffle', 'Artist', 'Album', 'All Songs', 'Genre', 'Era', 'Playlist', 'Ratings', 'My Fav', 'Recently Added', 'Recent',
-        'Most Played', 'Frequent', 'Hi-Res', 'Long Songs', 'Apps', 'Games', 'App Store', 'Update Library']]
+        'Most Played', 'Frequent', 'Listening Stats', 'Hi-Res', 'Long Songs', 'Apps', 'Games', 'App Store', 'Update Library']]
 
 
 def test_the_library_adds_the_card_s_media_folders_and_upload(fw, ui):
@@ -2538,10 +2538,10 @@ def test_a_return_to_the_library_reads_the_card_only_after_a_store_job_or_usb_st
     assert opened() == before + 2 and ('Apps', False) in page_rows(ui, view)
 
 
-@pytest.mark.parametrize('sel, shown, after', [(14, True, 15), (3, True, 3), (13, True, 14), (15, False, 14), (13, False, 13)])
+@pytest.mark.parametrize('sel, shown, after', [(15, True, 16), (3, True, 3), (14, True, 15), (16, False, 15), (14, False, 14)])
 def test_the_library_s_highlight_stays_on_its_row_as_apps_shows_or_goes(fw, ui, sel, shown, after):
     """navigation.c's load drops a live list's selection when its count changes: the index and count it keeps move
-    with Apps. Shown rows before it: Shuffle to Long Songs, 13 (My Fav and Frequent hidden); App Store is 14 or 15,
+    with Apps. Shown rows before it: Shuffle to Long Songs, 14 (My Fav and Frequent hidden); App Store is 15 or 16,
     and Apps' own highlight goes to Games."""
     disk, win, view = apps_library(fw, ui, {} if shown else TAPE)
     count = len([1 for _, v in page_rows(ui, view) if v])
@@ -2574,7 +2574,7 @@ def test_hide_hi_res_hides_stock_s_row_and_leaves_the_others_in_order(fw, ui, co
     rows = page_rows(ui, view)
     assert [(c, v) for c, v in rows if c == 'Hi-Res'] == [('Hi-Res', shown)]
     assert [c for c, _ in rows][rows.index(('Genre', True)):][:6] == ['Genre', 'Era', 'Playlist', 'Ratings', 'My Fav', 'Recently Added']
-    assert rows[[c for c, _ in rows].index('Frequent') + 1] == ('Hi-Res', shown)
+    assert rows[[c for c, _ in rows].index('Listening Stats') + 1] == ('Hi-Res', shown)
     names = {row_text(ui, i): ui.name[ui.kids[i][0]] for i in ui.kids[view] if row_text(ui, i) in LIBRARY_STOCK}
     assert names['Hi-Res'] == '5' and names['Playlist'] == '10'  # stock's click reads the name, not the place
 
@@ -2596,7 +2596,7 @@ def test_the_library_s_added_rows_have_no_name_for_stock_s_click(fw, ui):
               if w == ui.kids[item][0] and e == EVT_CLICK}
     assert clicks['Shuffle'] == ui.fn('shuffle_menu') and clicks['Most Played'] == ui.fn('most_played')
     assert clicks['Ratings'] == ui.fn('ratings_menu') and clicks['Long Songs'] == ui.fn('long_songs')
-    assert clicks['Era'] == ui.fn('era_menu')
+    assert clicks['Era'] == ui.fn('era_menu') and clicks['Listening Stats'] == ui.fn('listening_stats')
 
 
 def test_a_library_that_is_not_stock_s_is_left(fw, ui):
