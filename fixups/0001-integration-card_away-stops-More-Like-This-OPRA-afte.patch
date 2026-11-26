@@ -1,0 +1,54 @@
+From 1d1881a32a19a0e83d6da44cb7cf05550565cefc Mon Sep 17 00:00:00 2001
+From: Travis Cole <11240+kelp@users.noreply.github.com>
+Date: Thu, 26 Nov 2026 12:38:07 -0800
+Subject: [PATCH] integration: card_away stops More Like This; OPRA after
+ Headphones
+
+eject-card moves USB Storage's card jobs into card_away, so the
+similar_stop that more-like-this adds there goes into card_away too.
+headphone-picker adds a peq_ui.c screen before OPRA's, so
+test_opra.py's screen numbers move up one.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01DaXZzN3FY6RrXiA6e34J2b
+---
+ patch/eject.c        | 5 +++--
+ test/fw/test_opra.py | 2 +-
+ 2 files changed, 4 insertions(+), 3 deletions(-)
+
+diff --git a/patch/eject.c b/patch/eject.c
+index 984702e3..e263b10b 100644
+--- a/patch/eject.c
++++ b/patch/eject.c
+@@ -17,12 +17,13 @@ extern void eject_sync(void);
+ 
+ /* The jobs that write to the card or keep its files open, each stopped: the card apps (they run
+  * from /tmp: addon.c), Tidal's downloads (tidal.c), Download Album Lyrics' job, playlist art's
+- * worker and the song durations' (durations.c). USB Storage (navigation.c ringnav_usbmode) and
+- * Eject Card. */
++ * worker and the song durations' (durations.c); More Like This's request stops, so no mix of the
++ * card's songs plays (similar.c). USB Storage (navigation.c ringnav_usbmode) and Eject Card. */
+ void card_away(void) {
+     tidal_card_away();
+     addon_card_away();
+     album_lyrics_stop();
++    similar_stop();
+     playlist_art_stop();
+     durations_shutdown(0);
+ }
+diff --git a/test/fw/test_opra.py b/test/fw/test_opra.py
+index ec50f65d..db682375 100644
+--- a/test/fw/test_opra.py
++++ b/test/fw/test_opra.py
+@@ -599,7 +599,7 @@ def test_a_thread_that_cannot_start_starts_nothing(fw):
+ 
+ # The EQ page's Presets → Search OPRA.
+ 
+-OPRA, OPRA_PICK = 12, 13  # peq_ui.c's screens after NAMING
++OPRA, OPRA_PICK = 13, 14  # peq_ui.c's screens after NAMING and HEADPHONES
+ 
+ 
+ def eq_page(fw, files, wifi=1):
+-- 
+2.56.1
+
