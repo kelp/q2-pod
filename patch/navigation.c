@@ -9666,6 +9666,7 @@ int ringnav(void *ctx, event_t *event) {
         media_key(key);
         return STOP;
     }
+    if (!result && addon_remote_key(key)) return STOP; /* AirPlay keys to a card app */
     if (result) {
         cancel_center();
         if (key == KEY_PREV || key == KEY_NEXT) drop_wheel();
