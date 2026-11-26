@@ -103,6 +103,10 @@ static int remote_app(void) {
     return rm.found;
 }
 
+/* The id of the app that asks for the keys, whether they are its now or not; 0 for none. addon_np.c
+ * shows its Now Playing. */
+const char *addon_remote_app(void) { return remote_app() ? rm.app : 0; }
+
 /* Whether the keys are an app's now: AirPlay plays, no other source has them, and an app asks. */
 int addon_remote_on(void) {
     return airplayGetFlag() == 2 && media_owner() == 1 && !addon_game_audio() && remote_app();
