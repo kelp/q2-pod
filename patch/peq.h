@@ -848,10 +848,20 @@ int smart_hold(int (*fn)(void *, event_t *), void *ctx, const char *page);
 int need_link(int (*fn)(void *, event_t *),
               void *ctx); /* smart_hold, else "Connect to Wi-Fi first" */
 /* the work smart_wifi.c keeps the radio on for: spotify.c's, scrobble.c's, tidal.c's, addon.c's,
- * netupdate.c's and onlinematch.c's */
+ * netupdate.c's, onlinematch.c's and opra.c's */
 int spot_running(void), scrobble_busy(void), tidal_busy(void), addon_running(void),
-    netupdate_busy(void), album_lyrics_busy(void);
-int addon_offline(void);               /* addon.c: the card app's page open is a wifi=0 app's */
+    netupdate_busy(void), album_lyrics_busy(void), opra_busy(void);
+int addon_offline(void); /* addon.c: the card app's page open is a wifi=0 app's */
+/* opra.c: OPRA's EQ database on the card for the EQ page's Search OPRA (its downloaded copy
+ * indexed; a search's results; a result's presets; one taken as a preset and its name) */
+int opra_record(const char *line, peq_preset *out, char *author, char *details, char *product,
+                unsigned n);
+int opra_index(const char *db, const char *index);
+int opra_ready(void), opra_update(void (*changed)(const char *)), opra_find(const char *query);
+int opra_open(int i), opra_take(int i, peq_preset *out, char *name, unsigned n);
+const char *opra_query(void), *opra_hit(int i), *opra_opened(void);
+const char *opra_choice(int i, const char **details);
+void opra_close(void);
 void netupdate_poll(void);             /* power_poll: a newer release told on Home (netupdate.c) */
 const char *coverflow_sort_name(void); /* coverflow.c */
 void coverflow_sort_step(void), coverflow_refresh_art(void);

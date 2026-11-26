@@ -737,7 +737,7 @@ p:has(+ ul), p:has(+ ol), p:has(+ table), p:has(+ pre), .task, h2, h3, .lead { b
       <tr><td>Bands</td><td>Peaking, Low shelf or High shelf, with frequency, gain (−24 to +24 dB), Q, on/off and channel (both, L or R). Tap a frequency or Q to type it, or change it with <b>Raise</b> and <b>Lower</b>.</td></tr>
       <tr><td>Preamp</td><td><b>Auto</b> cuts sufficiently for the boosts at the current sample rate, shown as, for example, <b>Auto (44.1: -9.2 / 48: -8.8)</b>. It is not a limiter. Or select +12 to −24 dB: this is the same at all rates, and can clip with large boosts.</td></tr>
       <tr><td>Balance</td><td>L 12.0 dB to R 12.0 dB in 0.5 dB steps. <b>R 1.0 dB</b> decreases the left by 1 dB.</td></tr>
-      <tr><td>Presets</td><td><b>Stock presets</b> loads the Shanling curves into the ten bands. <b>Import from SD /EQ</b> loads AutoEQ files (below). <b>Rename a preset</b> renames a saved preset. Return keeps the previous name. <b>Save editor preset</b> saves the bands as Manual 01–10. <b>Delete a preset</b> removes one.</td></tr>
+      <tr><td>Presets</td><td><b>Stock presets</b> loads the Shanling curves into the ten bands. <b>Import from SD /EQ</b> loads AutoEQ files (below). <b>Search OPRA</b> finds presets for your headphones over Wi-Fi (below). <b>Rename a preset</b> renames a saved preset. Return keeps the previous name. <b>Save editor preset</b> saves the bands as Manual 01–10. <b>Delete a preset</b> removes one.</td></tr>
       <tr><td>Apply changes</td><td>Edits and presets play only after you select this.</td></tr>
       <tr><td>Enabled</td><td>Sets Advanced on or off immediately. On sets Simple off.</td></tr>
       <tr><td>Reset to defaults</td><td>Asks first, then sets the bands, preamp and balance flat. Select Apply changes to hear it. Enabled and saved presets do not change.</td></tr>
@@ -754,6 +754,18 @@ p:has(+ ul), p:has(+ ol), p:has(+ table), p:has(+ pre), .task, h2, h3, .lead { b
     <li>In Advanced, select <b>Presets → Import from SD /EQ</b>, then the file, or <b>Import all</b> for all the files on the page. Long lists have <b>Next page</b> and <b>Previous page</b>.</li>
     <li>Select the saved preset, then <b>Apply changes</b>. Set <b>Enabled</b> to On.</li>
   </ol>
+  </div>
+
+  <div class="sec">
+  <h2 id="eqopra">Find a preset in OPRA</h2>
+  <p class="task">To get a preset for your headphones from the OPRA database, without a computer:</p>
+  <ol class="steps">
+    <li>Connect to Wi-Fi. In Advanced, select <b>Presets → Search OPRA</b>.</li>
+    <li>The first time, select <b>Download OPRA database</b>. It saves approximately 13 MB to the card, and the title shows the progress. Stay on the EQ page until the title shows <b>OPRA ready</b>. Later, <b>Update OPRA database</b> gets the latest database.</li>
+    <li>Type a part of the name, for example <code>hd600</code>, and select Done. Select your headphones, then a preset. Each preset shows its author and its target.</li>
+    <li>The Q2 saves the preset as <b>Vendor Product (author, details)</b>. Select it in <b>Presets</b>, then <b>Apply changes</b>.</li>
+  </ol>
+  <p>EQ data from OPRA, <a href="https://github.com/opra-project/OPRA">https://github.com/opra-project/OPRA</a>, CC BY-SA 4.0.</p>
   </div>
 
   <div class="sec">

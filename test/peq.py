@@ -675,6 +675,19 @@ void shim_following(int on) { eq_following = on; }
 int pod_value(int i) { return i == POD_EQ_OUTPUT ? eq_following : 0; } /* EQ per Output's, navigation.c's */
 const char *tr(const char *en) { return en; } /* language.c's, with no language: English */
 void ringnav_eq_output_toggle(void) { eq_following = !eq_following; }
+/* opra.c and smart_wifi.c, which the page calls for Search OPRA (test/fw/test_opra.py): no database */
+int opra_ready(void) { return 0; }
+int opra_busy(void) { return 0; }
+int opra_update(void (*changed)(const char *)) { return 0; }
+int opra_find(const char *query) { return -1; }
+int opra_open(int i) { return -1; }
+int opra_take(int i, peq_preset *out, char *name, unsigned n) { return 0; }
+const char *opra_query(void) { return ""; }
+const char *opra_hit(int i) { return 0; }
+const char *opra_opened(void) { return 0; }
+const char *opra_choice(int i, const char **details) { return 0; }
+void opra_close(void) {}
+int need_link(int (*fn)(void *, void *), void *ctx) { return 0; }
 void shim_run(void) { int (*f)(const void *) = timer_fn; timer_fn = 0; if (f) f(0); }
 /* Click the row whose labels, caption and value joined by a space, start with text; optionally let
  * the deferred render run (1), or only find it (2). */

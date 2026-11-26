@@ -44,7 +44,7 @@
   </tr>
   <tr valign="top">
     <td><b>EQ</b></td>
-    <td>Simple has Low, Mid and High sliders with presets. Advanced is a parametric EQ with up to 30 bands, a live curve, Auto preamp and Balance. AutoEQ and Equalizer APO presets import from the card. Mono Audio and Swap L/R.</td>
+    <td>Simple has Low, Mid and High sliders with presets. Advanced is a parametric EQ with up to 30 bands, a live curve, Auto preamp and Balance. AutoEQ and Equalizer APO presets import from the card, or come from the OPRA database over Wi-Fi. Mono Audio and Swap L/R.</td>
   </tr>
   <tr valign="top">
     <td><b>Lyrics and covers</b></td>
