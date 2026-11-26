@@ -55,7 +55,8 @@ enum {
     QA_CHAPTERS,
     QA_MORE,
     QA_NEW_PLAYLIST,
-    QA_EDIT_PLAYLISTS
+    QA_EDIT_PLAYLISTS,
+    QA_SIMILAR
 };
 
 /* Everything a row's tracks are resolved from; a change while the menu is open cancels it. */
@@ -346,6 +347,8 @@ static int qm_run(const void *unused) {
         qm.qm_choice = 0;
     } else if (r && a == QA_CHAPTERS) {
         chapters_open(r);
+    } else if (r && a == QA_SIMILAR) {
+        similar_click(0, 0); /* similar.c: Last.fm's similar artists' songs */
     } else if (r && a == QA_QUEUE) {
         /* A shuffle's play order is not the list's: ours (Up Next). A Play Next stock's Shuffle was
          * holding (ringnav_shuffle) goes first in it, as advanced play has no forced pick. */
@@ -641,6 +644,7 @@ static int qm_open(const void *unused) {
      * play's Now Playing has none; Back reaches that folder_page instead. */
     if (song && !navigator_window_is_exist("folder_page") && song_folder(r, st.go_folder))
         acts[n++] = QA_FOLDER;
+    if (qm.qm_kind == QM_PLAYING && artist && *artist) acts[n++] = QA_SIMILAR;
     if (qm.qm_kind == QM_PLAYING) {
         acts[n++] = QA_ADV_SHUFFLE;
         acts[n++] = QA_REPEAT;
@@ -675,7 +679,8 @@ static int qm_open(const void *unused) {
                                         N_("Chapters"),
                                         N_("More…"),
                                         N_("New Playlist"),
-                                        N_("Select Playlists…") };
+                                        N_("Select Playlists…"),
+                                        N_("More Like This") };
     char rated[128];
     /* stock sortselect row styles */
     int painted = own_hold(), pitch = painted ? theme()->page_row : QM_ROW;
