@@ -678,6 +678,10 @@ int side_seek(unsigned key, int phase);
 /* window_split.c: a theme's anim="split", given to stock's window animator factory (motion_hint) */
 void window_split_register(void);
 
+/* eject.c */
+void card_away(void);           /* the card's jobs stopped: USB Storage and Eject Card */
+void eject_row(widget_t *view); /* System's Eject Card */
+
 /* usb_charge.c: wrappers for charging, configuration loading and USB gadget dispatch. */
 int ringnav_usb_charge(int on), usb_charge_held(void), usb_charge_wanted(void);
 void usb_charge_row(widget_t *win, widget_t *view); /* Power's USB DAC Charging */
