@@ -59,9 +59,10 @@ static int quick_long(const void *unused) {
         if (eq && top) return 0;
         if (eq) peq_page_replace(eq);
     }
-    navigator_to(page == 1   ? "systemset/wifi_page"
-                 : page == 2 ? "systemset/bluetooth_page"
-                             : "playset/equalizer_page"); /* as Playback's EQ row (0x4bd114) */
+    if (page == 3)
+        peq_headphones(); /* the EQ page, on the headphones' presets */
+    else
+        navigator_to(page == 1 ? "systemset/wifi_page" : "systemset/bluetooth_page");
     return 0;
 }
 static void quick_press(widget_t *icon) {
