@@ -17,12 +17,13 @@ extern void eject_sync(void);
 
 /* The jobs that write to the card or keep its files open, each stopped: the card apps (they run
  * from /tmp: addon.c), Tidal's downloads (tidal.c), Download Album Lyrics' job, playlist art's
- * worker and the song durations' (durations.c). USB Storage (navigation.c ringnav_usbmode) and
- * Eject Card. */
+ * worker and the song durations' (durations.c); More Like This's request stops, so no mix of the
+ * card's songs plays (similar.c). USB Storage (navigation.c ringnav_usbmode) and Eject Card. */
 void card_away(void) {
     tidal_card_away();
     addon_card_away();
     album_lyrics_stop();
+    similar_stop();
     playlist_art_stop();
     durations_shutdown(0);
 }

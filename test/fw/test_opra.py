@@ -599,7 +599,7 @@ def test_a_thread_that_cannot_start_starts_nothing(fw):
 
 # The EQ page's Presets → Search OPRA.
 
-OPRA, OPRA_PICK = 12, 13  # peq_ui.c's screens after NAMING
+OPRA, OPRA_PICK = 13, 14  # peq_ui.c's screens after NAMING and HEADPHONES
 
 
 def eq_page(fw, files, wifi=1):
